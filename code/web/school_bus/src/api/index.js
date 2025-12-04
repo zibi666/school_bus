@@ -5,11 +5,22 @@ const api = axios.create({
   timeout: 5000
 })
 
-// Request interceptor to add token
+// Attach identity headers so backend can identify the caller
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const rawUserInfo = localStorage.getItem('userInfo')
+  if (rawUserInfo) {
+    try {
+      const userInfo = JSON.parse(rawUserInfo)
+      config.headers = config.headers || {}
+      if (userInfo.role === 'student' && userInfo.studentId) {
+        config.headers['X-Student-Id'] = userInfo.studentId
+      }
+      if (userInfo.role === 'admin' && userInfo.adminId) {
+        config.headers['X-Admin-Id'] = userInfo.adminId
+      }
+    } catch (error) {
+      console.warn('Invalid userInfo in localStorage', error)
+    }
   }
   return config
 })

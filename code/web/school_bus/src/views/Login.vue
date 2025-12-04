@@ -67,13 +67,13 @@ const handleStudentLogin = async () => {
     // 本地测试账号：student / 123456（无需访问后端）
     if (studentForm.value.studentId === 'student' && studentForm.value.password === '123456') {
       const mockUser = {
-        studentId: 'student',
+        role: 'student',
+        studentId: 2021001,
         name: '测试学生',
         gender: '男',
         clazz: '测试班级'
       }
-      localStorage.setItem('token', 'test-token-student')
-      localStorage.setItem('role', 'student')
+      localStorage.setItem('role', mockUser.role)
       localStorage.setItem('userInfo', JSON.stringify(mockUser))
       ElMessage.success('测试账号登录成功（本地模拟）')
       router.push('/student/charter')
@@ -82,9 +82,9 @@ const handleStudentLogin = async () => {
 
     const res = await loginStudent(studentForm.value)
     if (res.code === 200) {
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('role', 'student')
-      localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
+      const userInfo = res.data.userInfo || {}
+      localStorage.setItem('role', userInfo.role || 'student')
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
       ElMessage.success('登录成功')
       router.push('/student/charter')
     } else {
@@ -100,11 +100,11 @@ const handleAdminLogin = async () => {
     // 本地测试账号：admin / 123456（无需访问后端）
     if (adminForm.value.username === 'admin' && adminForm.value.password === '123456') {
       const mockUser = {
-        username: 'admin',
+        role: 'admin',
+        adminId: 9001,
         name: '测试管理员'
       }
-      localStorage.setItem('token', 'test-token-admin')
-      localStorage.setItem('role', 'admin')
+      localStorage.setItem('role', mockUser.role)
       localStorage.setItem('userInfo', JSON.stringify(mockUser))
       ElMessage.success('测试管理员登录成功（本地模拟）')
       router.push('/admin/trips')
@@ -113,9 +113,9 @@ const handleAdminLogin = async () => {
 
     const res = await loginAdmin(adminForm.value)
     if (res.code === 200) {
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('role', 'admin')
-      localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
+      const userInfo = res.data.userInfo || {}
+      localStorage.setItem('role', userInfo.role || 'admin')
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
       ElMessage.success('登录成功')
       router.push('/admin/trips')
     } else {
