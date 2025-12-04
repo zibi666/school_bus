@@ -7,17 +7,16 @@ import com.lm.school_bus.exception.BadRequestException;
 import com.lm.school_bus.exception.ResourceNotFoundException;
 import com.lm.school_bus.repository.AdminRepository;
 import com.lm.school_bus.repository.StudentRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Service
 public class AuthService {
 
     private final StudentRepository studentRepository;
     private final AdminRepository adminRepository;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public AuthService(StudentRepository studentRepository,
                        AdminRepository adminRepository) {
@@ -36,7 +35,7 @@ public class AuthService {
         student.setName(request.getName());
         student.setGender(request.getGender());
         student.setClazz(request.getClazz());
-        student.setPassword(passwordEncoder.encode(request.getPassword()));
+        student.setPassword(request.getPassword());
         studentRepository.save(student);
         return buildStudentAuthResponse(student);
     }
@@ -45,7 +44,7 @@ public class AuthService {
         Long studentId = Long.parseLong(request.getStudentId());
         Student student = studentRepository.findByStudentId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("学生不存在"));
-        if (!passwordEncoder.matches(request.getPassword(), student.getPassword())) {
+        if (!Objects.equals(request.getPassword(), student.getPassword())) {
             throw new BadRequestException("密码错误");
         }
         return buildStudentAuthResponse(student);
@@ -60,7 +59,7 @@ public class AuthService {
         Admin admin = new Admin();
         admin.setAdminId(adminId);
         admin.setName(request.getName());
-        admin.setPassword(passwordEncoder.encode(request.getPassword()));
+        admin.setPassword(request.getPassword());
         adminRepository.save(admin);
         return buildAdminAuthResponse(admin);
     }
@@ -69,7 +68,7 @@ public class AuthService {
         Integer adminId = Integer.parseInt(request.getUsername());
         Admin admin = adminRepository.findByAdminId(adminId)
                 .orElseThrow(() -> new ResourceNotFoundException("管理员不存在"));
-        if (!passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
+        if (!Objects.equals(request.getPassword(), admin.getPassword())) {
             throw new BadRequestException("密码错误");
         }
         return buildAdminAuthResponse(admin);

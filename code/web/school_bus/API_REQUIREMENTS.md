@@ -22,7 +22,7 @@
 | 管理员注册 | `POST /admin/register` | `{ "username": "9001", "name": "管理员A", "password": "123456" }` | `{ "userInfo": { "role": "admin", "name": "管理员A", "adminId": 9001 } }` |
 | 管理员登录 | `POST /admin/login` | `{ "username": "9001", "password": "123456" }` | 同上 |
 
-> 说明：学生/管理员账号均以阿拉伯数字存储，密码使用 BCrypt 加密写入 `student_info.manage_info` 表。
+> 说明：学生/管理员账号均以阿拉伯数字存储，密码以明文写入 `student_info.manage_info` 表。
 
 ## 2. 学生模块 `/api/student`
 
