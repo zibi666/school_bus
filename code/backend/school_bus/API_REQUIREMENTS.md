@@ -28,16 +28,29 @@
 
 > 所有接口都要求在请求头携带 `X-Student-Id`，后端会使用该学号读取学生信息。
 
-### 2.1 包车 / 购票
+### 2.1 浏览可预约车次
 
-- **接口**：`POST /charter`
-- **请求体**：`{"date":"2025-01-01","startLocation":"学校北门","endLocation":"高铁站","vehicleType":"客车"}`
-- **处理逻辑**：
-  1. 读取登录学生信息，校验日期不能早于当天；
-  2. 随机生成未占用车牌号（如 `京A12345`）和 6 位邀请码；
-  3. 随机分配已有司机（如需，请先在后台新增司机）；
-  4. 插入 `bus_schedules` / `student_ticket_orders` / `passenger_info`，并把座位 1 留给包车人；
-  5. 价格根据 `vehicleType` 自动估算，可在 `application.properties` 用 `app.charter.price.default` 调整基准价。
+- **接口**：`GET /trips/available`
+- **说明**：管理员提前创建的车次会立即对学生开放。列表中仅展示尚未被选择的车次（`remainingSeats == maxSeats`）。
+- **返回示例**：
+
+```json
+[
+  {
+    "plateNumber": "京A56789",
+    "vehicleType": "客车",
+    "date": "2025-01-01",
+    "startLocation": "学校北门",
+    "endLocation": "高铁站",
+    "maxSeats": 48
+  }
+]
+```
+
+### 2.2 预约车次
+
+- **接口**：`POST /trips/{busId}/book`
+- **说明**：首位预约的同学将占用座位 1，同时生成邀请码供其他同学加入；系统会自动为该车次指派司机。
 - **返回数据**：
 
 ```json
@@ -49,14 +62,14 @@
 }
 ```
 
-### 2.2 通过邀请码加入
+### 2.3 通过邀请码加入
 
 - **接口**：`POST /join`
 - **请求体**：`{"code":"ABC123"}`
 - **效果**：按最小未使用座位号自动排座，插入 `passenger_info` 并更新车次人数。重复加入会返回 400。
 - **返回**：`data` 为空，`code`=200 表示成功。
 
-### 2.3 获取我的行程
+### 2.4 获取我的行程
 
 - **接口**：`GET /trips`
 - **返回示例**：
@@ -78,14 +91,14 @@
 ]
 ```
 
-### 2.4 退票
+### 2.5 退票
 
 - **接口**：`POST /refund/{plateNumber}`
 - **逻辑**：
   - 座位号 1（包车人）退票：直接删除 `bus_schedules`——数据库外键会级联删除订单与乘客；
   - 普通乘客退票：仅删除自己的 `passenger_info`，车次人数 -1。
 
-### 2.5 查看个人资料
+### 2.6 查看个人资料
 
 - **接口**：`GET /profile`
 - **返回**：`{"studentId":2021001,"name":"张三","gender":"男","clazz":"计科1班"}`。
@@ -94,7 +107,13 @@
 
 > 所有接口都要求在请求头携带 `X-Admin-Id`，后端会验证该管理员是否存在。缺失或无效时会返回 400/404。
 
-### 3.1 车次列表
+### 3.1 新增车次
+
+- `POST /trips`
+- **请求体**：`{"plateNumber":"京A56789","vehicleType":"客车","date":"2025-01-01","startLocation":"学校北门","endLocation":"高铁站","maxSeats":48}`
+- **说明**：创建车次仅写入 `bus_schedules`，剩余座位会初始化为 `maxSeats`，等待学生抢占。
+
+### 3.2 车次列表
 
 - `GET /trips`
 - **返回**：
@@ -108,29 +127,32 @@
     "startLocation": "学校北门",
     "endLocation": "高铁站",
     "passengerCount": 5,
+    "maxSeats": 48,
+    "remainingSeats": 20,
     "driverName": "李师傅",
     "driverPhone": "13800138000"
   }
 ]
 ```
 
-### 3.2 查看单个车次乘客
+### 3.3 查看单个车次乘客
 
 - `GET /trips/{plateNumber}/passengers`
+- **注意**：如果车牌号里包含汉字，需要先进行 URL 编码，例如查询 `京A56789` 时请求 `GET /trips/%E4%BA%ACA56789/passengers`，或在前端通过 `encodeURIComponent(plateNumber)` 生成路径。
 - **返回**：`[{"studentId":2021001,"name":"张三","seatNumber":1}, ...]`
 
-### 3.3 更换司机
+### 3.4 更换司机
 
 - `PUT /trips/{plateNumber}/driver`
 - **请求体**：`{"driverPhone":"13900139000"}`
 - **效果**：校验司机是否存在，并更新 `student_ticket_orders.driver`。
 
-### 3.4 司机列表
+### 3.5 司机列表
 
 - `GET /drivers`
 - **返回**：`[{"name":"李师傅","phone":"13800138000"}]`
 
-### 3.5 新增司机
+### 3.6 新增司机
 
 - `POST /drivers`
 - **请求体**：`{"name":"王师傅","phone":"13700137000"}`（电话唯一）

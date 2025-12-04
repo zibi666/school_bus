@@ -15,4 +15,6 @@ public interface PassengerInfoRepository extends JpaRepository<PassengerInfo, Lo
     boolean existsByBusIdAndPassengerNumber(String busId, Long passengerNumber);
 
     Optional<PassengerInfo> findByBusIdAndPassengerNumber(String busId, Long passengerNumber);
+
+    void deleteByBusId(String busId);
 }

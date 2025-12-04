@@ -80,7 +80,8 @@ CREATE TABLE `bus_schedules` (
   `use_date` datetime NOT NULL COMMENT '用车日期',
   `origin` varchar(255) NOT NULL COMMENT '出发地',
   `destination` varchar(255) NOT NULL COMMENT '目的地',
-  `number` int(11) NOT NULL COMMENT '人数',
+  `max_number` int(11) NOT NULL COMMENT '车辆座位',
+  `number` int(11) NOT NULL COMMENT '还剩多少座位',
   PRIMARY KEY (`bus_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
@@ -89,5 +90,3 @@ CREATE TABLE `bus_schedules` (
 # 连接信息
 - 数据库是腾讯云Mysql5.7
 - 数据库叫school_bus
-- 主机地址:sh-cynosdbmysql-grp-2gf1ewak.sql.tencentcdb.com
-- 端口:28451

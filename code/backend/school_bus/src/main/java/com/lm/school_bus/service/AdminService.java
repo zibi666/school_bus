@@ -37,6 +37,24 @@ public class AdminService {
         this.driverRepository = driverRepository;
     }
 
+    @Transactional
+    public TripOverviewResponse createTrip(CreateTripRequest request) {
+        String plateNumber = Objects.requireNonNull(request.getPlateNumber(), "车牌不能为空");
+        if (busScheduleRepository.existsById(plateNumber)) {
+            throw new BadRequestException("该车牌已存在车次");
+        }
+        BusSchedule schedule = new BusSchedule();
+        schedule.setBusId(plateNumber);
+        schedule.setBusType(request.getVehicleType());
+        schedule.setUseDate(request.getDate());
+        schedule.setOrigin(request.getStartLocation());
+        schedule.setDestination(request.getEndLocation());
+        schedule.setMaxNumber(request.getMaxSeats());
+        schedule.setRemainingSeats(request.getMaxSeats());
+        busScheduleRepository.save(schedule);
+        return buildTripOverview(schedule);
+    }
+
     @Transactional(readOnly = true)
     public List<TripOverviewResponse> listTrips() {
         return busScheduleRepository.findAll().stream()
@@ -80,12 +98,13 @@ public class AdminService {
 
     @Transactional
     public DriverResponse addDriver(DriverRequest request) {
-        if (driverRepository.existsById(request.getPhone())) {
+        String phone = Objects.requireNonNull(request.getPhone(), "司机电话不能为空");
+        if (driverRepository.existsById(phone)) {
             throw new BadRequestException("该电话已存在司机");
         }
         Driver driver = new Driver();
         driver.setName(request.getName());
-        driver.setPhone(request.getPhone());
+        driver.setPhone(phone);
         driverRepository.save(driver);
         return DriverResponse.builder()
                 .name(driver.getName())
@@ -94,18 +113,29 @@ public class AdminService {
     }
 
     private TripOverviewResponse buildTripOverview(BusSchedule schedule) {
-        StudentTicketOrder order = orderRepository.findById(schedule.getBusId())
-                .orElseThrow(() -> new ResourceNotFoundException("车次" + schedule.getBusId() + "缺少订单信息"));
-        Driver driver = driverRepository.findById(order.getDriverPhone()).orElse(null);
+        String busId = Objects.requireNonNull(schedule.getBusId());
+        StudentTicketOrder order = orderRepository.findById(busId).orElse(null);
+        Driver driver = null;
+        String driverPhone = "-";
+        int passengerCount = 0;
+        if (order != null) {
+            passengerCount = order.getNumberOfPassengers();
+            driverPhone = order.getDriverPhone();
+            if (driverPhone != null) {
+                driver = driverRepository.findById(driverPhone).orElse(null);
+            }
+        }
         return TripOverviewResponse.builder()
                 .plateNumber(schedule.getBusId())
                 .vehicleType(schedule.getBusType())
                 .date(schedule.getUseDate())
                 .startLocation(schedule.getOrigin())
                 .endLocation(schedule.getDestination())
-                .passengerCount(schedule.getPassengerCount())
-                .driverName(driver != null ? driver.getName() : "-")
-                .driverPhone(driver != null ? driver.getPhone() : order.getDriverPhone())
+            .passengerCount(passengerCount)
+            .maxSeats(schedule.getMaxNumber())
+            .remainingSeats(schedule.getRemainingSeats())
+            .driverName(driver != null ? driver.getName() : "-")
+            .driverPhone(driver != null ? driver.getPhone() : driverPhone)
                 .build();
     }
 

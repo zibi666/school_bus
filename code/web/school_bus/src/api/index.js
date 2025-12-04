@@ -39,13 +39,15 @@ export const loginAdmin = (data) => api.post('/auth/admin/login', data)
 export const registerAdmin = (data) => api.post('/auth/admin/register', data)
 
 // Student
-export const charterBus = (data) => api.post('/student/charter', data)
+export const getAvailableTrips = () => api.get('/student/trips/available')
+export const bookTrip = (busId) => api.post(`/student/trips/${busId}/book`)
 export const joinByInviteCode = (code) => api.post('/student/join', { code })
 export const getMyTrips = () => api.get('/student/trips')
-export const refundTicket = (ticketId) => api.post(`/student/refund/${ticketId}`)
+export const refundTicket = (plateNumber) => api.post(`/student/refund/${plateNumber}`)
 export const getStudentProfile = () => api.get('/student/profile')
 
 // Admin
+export const createTrip = (data) => api.post('/admin/trips', data)
 export const getAllTrips = () => api.get('/admin/trips')
 export const getTripPassengers = (plateNumber) => api.get(`/admin/trips/${plateNumber}/passengers`)
 export const updateTripDriver = (plateNumber, driverPhone) => api.put(`/admin/trips/${plateNumber}/driver`, { driverPhone })

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +25,6 @@ public class StudentService {
     private final PassengerInfoRepository passengerInfoRepository;
     private final DriverRepository driverRepository;
     private final InviteCodeService inviteCodeService;
-    private final PlateNumberService plateNumberService;
 
     private final SecureRandom random = new SecureRandom();
 
@@ -38,7 +36,6 @@ public class StudentService {
                           PassengerInfoRepository passengerInfoRepository,
                           DriverRepository driverRepository,
                           InviteCodeService inviteCodeService,
-                          PlateNumberService plateNumberService,
                           @Value("${app.charter.price.default:388.88}") double defaultPrice) {
         this.studentRepository = studentRepository;
         this.busScheduleRepository = busScheduleRepository;
@@ -46,41 +43,50 @@ public class StudentService {
         this.passengerInfoRepository = passengerInfoRepository;
         this.driverRepository = driverRepository;
         this.inviteCodeService = inviteCodeService;
-        this.plateNumberService = plateNumberService;
         this.defaultPrice = defaultPrice;
     }
 
+
+    @Transactional(readOnly = true)
+    public List<AvailableTripResponse> listAvailableTrips() {
+        return busScheduleRepository.findAll().stream()
+                .filter(schedule -> Objects.equals(schedule.getRemainingSeats(), schedule.getMaxNumber()))
+                .sorted(Comparator.comparing(BusSchedule::getUseDate))
+                .map(schedule -> AvailableTripResponse.builder()
+                        .plateNumber(schedule.getBusId())
+                        .vehicleType(schedule.getBusType())
+                        .date(schedule.getUseDate())
+                        .startLocation(schedule.getOrigin())
+                        .endLocation(schedule.getDestination())
+                        .maxSeats(schedule.getMaxNumber())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     @Transactional
-    public CharterResponse charter(Long studentId, CharterRequest request) {
+    public CharterResponse bookTrip(Long studentId, String busId) {
         Objects.requireNonNull(studentId, "studentId不能为空");
+        Objects.requireNonNull(busId, "busId不能为空");
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("学生不存在"));
-        if (request.getDate().isBefore(LocalDate.now())) {
-            throw new BadRequestException("用车日期不能早于今天");
+        BusSchedule schedule = busScheduleRepository.findById(busId)
+                .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
+        if (!Objects.equals(schedule.getRemainingSeats(), schedule.getMaxNumber())) {
+            throw new BadRequestException("该车次已被其它同学选中");
         }
         Driver driver = pickDriver();
-        String busId = plateNumberService.generatePlateNumber();
         String inviteCode = inviteCodeService.generateUniqueCode();
-
-        BusSchedule schedule = new BusSchedule();
-        schedule.setBusId(busId);
-        schedule.setBusType(request.getVehicleType());
-        schedule.setUseDate(request.getDate());
-        schedule.setOrigin(request.getStartLocation());
-        schedule.setDestination(request.getEndLocation());
-        schedule.setPassengerCount(1);
-        busScheduleRepository.save(schedule);
 
         StudentTicketOrder order = new StudentTicketOrder();
         order.setBusId(busId);
-        order.setBusType(request.getVehicleType());
+        order.setBusType(schedule.getBusType());
         order.setSeat("1");
-        order.setUseDate(request.getDate());
-        order.setOrigin(request.getStartLocation());
-        order.setDestination(request.getEndLocation());
+        order.setUseDate(schedule.getUseDate());
+        order.setOrigin(schedule.getOrigin());
+        order.setDestination(schedule.getDestination());
         order.setNumberOfPassengers(1);
         order.setDriverPhone(driver.getPhone());
-        order.setPrice(calculatePrice(request.getVehicleType()));
+        order.setPrice(calculatePrice(schedule.getBusType()));
         order.setInviteCode(inviteCode);
         orderRepository.save(order);
 
@@ -90,6 +96,9 @@ public class StudentService {
         passenger.setPassengerNumber(studentId);
         passenger.setPassengerName(student.getName());
         passengerInfoRepository.save(passenger);
+
+        schedule.setRemainingSeats(Math.max(0, schedule.getRemainingSeats() - 1));
+        busScheduleRepository.save(schedule);
 
         return CharterResponse.builder()
                 .inviteCode(inviteCode)
@@ -106,21 +115,25 @@ public class StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("学生不存在"));
         StudentTicketOrder order = orderRepository.findByInviteCode(request.getCode())
                 .orElseThrow(() -> new ResourceNotFoundException("邀请码无效"));
-        if (passengerInfoRepository.existsByBusIdAndPassengerNumber(order.getBusId(), studentId)) {
+        String orderBusId = Objects.requireNonNull(order.getBusId(), "订单缺失车次信息");
+        if (passengerInfoRepository.existsByBusIdAndPassengerNumber(orderBusId, studentId)) {
             throw new BadRequestException("已在该车次中");
         }
-        int seatNumber = nextSeatNumber(order.getBusId());
+        BusSchedule schedule = busScheduleRepository.findById(orderBusId)
+            .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
+        if (schedule.getRemainingSeats() <= 0) {
+            throw new BadRequestException("该车次座位已满");
+        }
+        int seatNumber = nextSeatNumber(orderBusId);
 
         PassengerInfo passenger = new PassengerInfo();
-        passenger.setBusId(order.getBusId());
+        passenger.setBusId(orderBusId);
         passenger.setPassengerSeat(String.valueOf(seatNumber));
         passenger.setPassengerNumber(studentId);
         passenger.setPassengerName(student.getName());
         passengerInfoRepository.save(passenger);
 
-        BusSchedule schedule = busScheduleRepository.findById(order.getBusId())
-                .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-        schedule.setPassengerCount(schedule.getPassengerCount() + 1);
+        schedule.setRemainingSeats(Math.max(0, schedule.getRemainingSeats() - 1));
         order.setNumberOfPassengers(order.getNumberOfPassengers() + 1);
         busScheduleRepository.save(schedule);
         orderRepository.save(order);
@@ -142,18 +155,19 @@ public class StudentService {
         Objects.requireNonNull(plateNumber, "plateNumber不能为空");
         PassengerInfo passenger = passengerInfoRepository.findByBusIdAndPassengerNumber(plateNumber, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("未找到对应乘车记录"));
+        BusSchedule schedule = busScheduleRepository.findById(plateNumber)
+            .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
+        StudentTicketOrder order = orderRepository.findById(plateNumber)
+            .orElseThrow(() -> new ResourceNotFoundException("订单不存在"));
         int seatNumber = parseSeat(passenger.getPassengerSeat());
         if (seatNumber == 1) {
-            BusSchedule schedule = busScheduleRepository.findById(plateNumber)
-                    .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-            busScheduleRepository.delete(schedule);
+            passengerInfoRepository.deleteByBusId(plateNumber);
+            orderRepository.delete(Objects.requireNonNull(order));
+            schedule.setRemainingSeats(schedule.getMaxNumber());
+            busScheduleRepository.save(schedule);
         } else {
             passengerInfoRepository.delete(passenger);
-            StudentTicketOrder order = orderRepository.findById(plateNumber)
-                    .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-            BusSchedule schedule = busScheduleRepository.findById(plateNumber)
-                    .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-            schedule.setPassengerCount(Math.max(0, schedule.getPassengerCount() - 1));
+            schedule.setRemainingSeats(Math.min(schedule.getMaxNumber(), schedule.getRemainingSeats() + 1));
             order.setNumberOfPassengers(Math.max(0, order.getNumberOfPassengers() - 1));
             busScheduleRepository.save(schedule);
             orderRepository.save(order);

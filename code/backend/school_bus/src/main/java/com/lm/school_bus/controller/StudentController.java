@@ -18,11 +18,15 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    @PostMapping("/charter")
-    public ApiResponse<CharterResponse> charter(
-            @RequestHeader(STUDENT_ID_HEADER) Long studentId,
-            @Valid @RequestBody CharterRequest request) {
-        return ApiResponse.success(studentService.charter(studentId, request));
+    @GetMapping("/trips/available")
+    public ApiResponse<?> availableTrips() {
+        return ApiResponse.success(studentService.listAvailableTrips());
+    }
+
+    @PostMapping("/trips/{busId}/book")
+    public ApiResponse<CharterResponse> bookTrip(@RequestHeader(STUDENT_ID_HEADER) Long studentId,
+                                                 @PathVariable String busId) {
+        return ApiResponse.success(studentService.bookTrip(studentId, busId));
     }
 
     @PostMapping("/join")

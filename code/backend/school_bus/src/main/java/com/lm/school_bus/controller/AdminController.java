@@ -2,6 +2,7 @@ package com.lm.school_bus.controller;
 
 import com.lm.school_bus.dto.ApiResponse;
 import com.lm.school_bus.dto.admin.ChangeDriverRequest;
+import com.lm.school_bus.dto.admin.CreateTripRequest;
 import com.lm.school_bus.dto.admin.DriverRequest;
 import com.lm.school_bus.service.AdminService;
 import jakarta.validation.Valid;
@@ -17,6 +18,12 @@ public class AdminController {
 
     public AdminController(AdminService adminService) {
         this.adminService = adminService;
+    }
+
+    @PostMapping("/trips")
+    public ApiResponse<?> createTrip(@RequestHeader(ADMIN_ID_HEADER) Integer adminId,
+                                     @Valid @RequestBody CreateTripRequest request) {
+        return ApiResponse.success(adminService.createTrip(request));
     }
 
     @GetMapping("/trips")

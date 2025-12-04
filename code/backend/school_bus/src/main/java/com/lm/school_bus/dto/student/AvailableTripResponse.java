@@ -1,4 +1,4 @@
-package com.lm.school_bus.dto.admin;
+package com.lm.school_bus.dto.student;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -9,15 +9,11 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Builder
-public class TripOverviewResponse {
+public class AvailableTripResponse {
     private String plateNumber;
     private String vehicleType;
     private LocalDate date;
     private String startLocation;
     private String endLocation;
-    private Integer passengerCount;
     private Integer maxSeats;
-    private Integer remainingSeats;
-    private String driverName;
-    private String driverPhone;
 }

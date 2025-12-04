@@ -31,6 +31,9 @@ public class BusSchedule {
     @Column(name = "destination", nullable = false)
     private String destination;
 
+    @Column(name = "max_number", nullable = false)
+    private Integer maxNumber;
+
     @Column(name = "number", nullable = false)
-    private Integer passengerCount;
+    private Integer remainingSeats;
 }
