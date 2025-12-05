@@ -41,7 +41,7 @@ public class AdminController {
     public ApiResponse<Void> changeDriver(@PathVariable String plateNumber,
                                           @RequestHeader(ADMIN_ID_HEADER) Integer adminId,
                                           @Valid @RequestBody ChangeDriverRequest request) {
-        adminService.changeDriver(plateNumber, request.getDriverPhone());
+        adminService.changeDriver(plateNumber, request.getDriverName());
         return ApiResponse.success(null);
     }
 
@@ -54,5 +54,12 @@ public class AdminController {
     public ApiResponse<?> addDriver(@RequestHeader(ADMIN_ID_HEADER) Integer adminId,
                                     @Valid @RequestBody DriverRequest request) {
         return ApiResponse.success(adminService.addDriver(request));
+    }
+
+    @DeleteMapping("/drivers/{phone}")
+    public ApiResponse<Void> deleteDriver(@RequestHeader(ADMIN_ID_HEADER) Integer adminId,
+                                          @PathVariable String phone) {
+        adminService.deleteDriver(phone);
+        return ApiResponse.success(null);
     }
 }

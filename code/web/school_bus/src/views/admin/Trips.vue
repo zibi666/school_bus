@@ -98,7 +98,7 @@
               v-for="item in drivers"
               :key="item.phone"
               :label="item.name + ' (' + item.phone + ')'"
-              :value="item.phone"
+              :value="item.name"
             />
           </el-select>
         </el-form-item>
@@ -196,7 +196,7 @@ const openChangeDriver = async (row) => {
     const res = await getAllDrivers()
     if (res.code === 200) {
       drivers.value = res.data
-      selectedDriver.value = row.driverPhone
+      selectedDriver.value = row.driverName
       driverVisible.value = true
     }
   } catch (error) {
