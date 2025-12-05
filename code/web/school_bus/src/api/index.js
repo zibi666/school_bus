@@ -50,7 +50,7 @@ export const getStudentProfile = () => api.get('/student/profile')
 export const createTrip = (data) => api.post('/admin/trips', data)
 export const getAllTrips = () => api.get('/admin/trips')
 export const getTripPassengers = (plateNumber) => api.get(`/admin/trips/${plateNumber}/passengers`)
-export const updateTripDriver = (plateNumber, driverPhone) => api.put(`/admin/trips/${plateNumber}/driver`, { driverPhone })
+export const updateTripDriver = (plateNumber, driverName) => api.put(`/admin/trips/${plateNumber}/driver`, { driverName })
 export const getAllDrivers = () => api.get('/admin/drivers')
 export const addDriver = (data) => api.post('/admin/drivers', data)
 

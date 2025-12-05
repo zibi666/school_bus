@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 public class ChangeDriverRequest {
 
-    @NotBlank(message = "司机电话不能为空")
-    private String driverPhone;
+    @NotBlank(message = "司机姓名不能为空")
+    private String driverName;
 }

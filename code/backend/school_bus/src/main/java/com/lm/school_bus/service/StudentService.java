@@ -85,7 +85,7 @@ public class StudentService {
         order.setOrigin(schedule.getOrigin());
         order.setDestination(schedule.getDestination());
         order.setNumberOfPassengers(1);
-        order.setDriverPhone(driver.getPhone());
+        order.setDriverName(driver.getName());
         order.setPrice(calculatePrice(schedule.getBusType()));
         order.setInviteCode(inviteCode);
         orderRepository.save(order);
@@ -213,8 +213,8 @@ public class StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
         StudentTicketOrder order = orderRepository.findById(busId)
                 .orElseThrow(() -> new ResourceNotFoundException("订单不存在"));
-        String driverPhone = Objects.requireNonNull(order.getDriverPhone(), "司机电话缺失");
-        Driver driver = driverRepository.findById(driverPhone).orElse(null);
+        String driverName = Objects.requireNonNull(order.getDriverName(), "司机姓名缺失");
+        Driver driver = driverRepository.findFirstByName(driverName).orElse(null);
         boolean isOwner = parseSeat(seat) == 1;
         return TripResponse.builder()
                 .plateNumber(busId)
@@ -223,8 +223,8 @@ public class StudentService {
                 .startLocation(schedule.getOrigin())
                 .endLocation(schedule.getDestination())
                 .seatNumber(parseSeat(seat))
-                .driverName(driver != null ? driver.getName() : "-")
-                .driverPhone(driver != null ? driver.getPhone() : order.getDriverPhone())
+            .driverName(driverName)
+            .driverPhone(driver != null ? driver.getPhone() : "-")
                 .price(order.getPrice())
                 .inviteCode(isOwner ? order.getInviteCode() : null)
                 .build();

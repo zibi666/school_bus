@@ -38,7 +38,7 @@ public class StudentTicketOrder {
     private Integer numberOfPassengers;
 
     @Column(name = "driver", nullable = false)
-    private String driverPhone;
+    private String driverName;
 
     @Column(name = "price", nullable = false)
     private Double price;

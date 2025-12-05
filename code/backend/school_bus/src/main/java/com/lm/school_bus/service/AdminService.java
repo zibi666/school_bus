@@ -75,14 +75,14 @@ public class AdminService {
     }
 
     @Transactional
-    public void changeDriver(String plateNumber, String driverPhone) {
+    public void changeDriver(String plateNumber, String driverName) {
         Objects.requireNonNull(plateNumber, "plateNumber不能为空");
-        Objects.requireNonNull(driverPhone, "driverPhone不能为空");
-        Driver driver = driverRepository.findById(driverPhone)
-                .orElseThrow(() -> new ResourceNotFoundException("司机不存在"));
+        Objects.requireNonNull(driverName, "driverName不能为空");
+        Driver driver = driverRepository.findFirstByName(driverName)
+            .orElseThrow(() -> new ResourceNotFoundException("司机不存在"));
         StudentTicketOrder order = orderRepository.findById(plateNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-        order.setDriverPhone(driver.getPhone());
+            .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
+        order.setDriverName(driver.getName());
         orderRepository.save(order);
     }
 
@@ -112,17 +112,27 @@ public class AdminService {
                 .build();
     }
 
+    @Transactional
+    public void deleteDriver(String phone) {
+        Objects.requireNonNull(phone, "司机电话不能为空");
+        if (!driverRepository.existsById(phone)) {
+            throw new ResourceNotFoundException("司机不存在");
+        }
+        driverRepository.deleteById(phone);
+    }
+
     private TripOverviewResponse buildTripOverview(BusSchedule schedule) {
         String busId = Objects.requireNonNull(schedule.getBusId());
         StudentTicketOrder order = orderRepository.findById(busId).orElse(null);
-        Driver driver = null;
+        String driverName = "-";
         String driverPhone = "-";
         int passengerCount = 0;
         if (order != null) {
             passengerCount = order.getNumberOfPassengers();
-            driverPhone = order.getDriverPhone();
-            if (driverPhone != null) {
-                driver = driverRepository.findById(driverPhone).orElse(null);
+            driverName = order.getDriverName();
+            if (driverName != null) {
+                Driver driver = driverRepository.findFirstByName(driverName).orElse(null);
+                driverPhone = driver != null ? driver.getPhone() : "-";
             }
         }
         return TripOverviewResponse.builder()
@@ -131,11 +141,11 @@ public class AdminService {
                 .date(schedule.getUseDate())
                 .startLocation(schedule.getOrigin())
                 .endLocation(schedule.getDestination())
-            .passengerCount(passengerCount)
-            .maxSeats(schedule.getMaxNumber())
-            .remainingSeats(schedule.getRemainingSeats())
-            .driverName(driver != null ? driver.getName() : "-")
-            .driverPhone(driver != null ? driver.getPhone() : driverPhone)
+                .passengerCount(passengerCount)
+                .maxSeats(schedule.getMaxNumber())
+                .remainingSeats(schedule.getRemainingSeats())
+                .driverName(driverName)
+                .driverPhone(driverPhone)
                 .build();
     }
 
