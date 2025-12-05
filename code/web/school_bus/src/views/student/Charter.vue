@@ -1,147 +1,164 @@
 <template>
-  <div class="charter-container">
-    <el-row :gutter="20">
-      <el-col :span="16">
-        <el-card shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>可预约车次</span>
-              <div class="card-actions">
-                <el-button text type="primary" @click="fetchAvailableTrips">刷新</el-button>
-              </div>
-            </div>
-          </template>
-          <el-empty description="暂无可预约车次" v-if="!loading && availableTrips.length === 0" />
-          <el-table v-else :data="availableTrips" v-loading="loading" stripe border>
-            <el-table-column prop="plateNumber" label="车牌号" width="120">
-              <template #default="scope">
-                <el-tag effect="dark">{{ scope.row.plateNumber }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="vehicleType" label="车型" width="100" />
-            <el-table-column prop="date" label="日期" width="120" sortable />
-            <el-table-column prop="startLocation" label="出发地" />
-            <el-table-column prop="endLocation" label="目的地" />
-            <el-table-column prop="maxSeats" label="可乘人数" width="120">
-              <template #default="scope">
-                <el-tag type="success" round>{{ scope.row.maxSeats }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right">
-              <template #default="scope">
-                <el-button type="primary" size="small" @click="handleBook(scope.row)">
-                  立即预约
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card header="加入已预约车次">
-          <el-form label-position="top">
-            <el-form-item label="邀请码">
-              <el-input v-model="inviteCode" placeholder="请输入 6 位邀请码" maxlength="6"></el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="success" @click="handleJoin" style="width: 100%">加入</el-button>
-            </el-form-item>
-          </el-form>
-          <div class="tips">
-            <p>提示：首位预约者会得到邀请码，分享给同乘同学后即可加入该车次。</p>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+  <div class="page-container">
+    <div class="content-card">
+      <div class="header">
+        <h2>申请包车</h2>
+        <p>填写下方的表单来预约您的行程</p>
+      </div>
+
+      <form @submit.prevent="submitOrder" class="apply-form">
+        <div class="form-group">
+          <label>目的地</label>
+          <input type="text" v-model="form.destination" placeholder="请输入目的地" required />
+        </div>
+
+        <div class="form-group">
+          <label>使用时间段</label>
+          <input type="text" v-model="form.usageTime" placeholder="例如：12月20日 9:00-12:00" required />
+        </div>
+
+        <div class="form-group">
+          <label>需求车型</label>
+          <select v-model="form.requestedCarType" required>
+            <option value="" disabled>请选择车型</option>
+            <option>大巴 (45座)</option>
+            <option>中巴 (20座)</option>
+            <option>商务车 (7座)</option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="submit-btn" :disabled="loading">
+            {{ loading ? '提交中...' : '提交申请' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAvailableTrips, bookTrip, joinByInviteCode } from '../../api'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { createOrder } from '../../api' 
 
 const router = useRouter()
-const availableTrips = ref([])
 const loading = ref(false)
-const inviteCode = ref('')
+const form = reactive({
+  destination: '',
+  usageTime: '',
+  requestedCarType: ''
+})
 
-const fetchAvailableTrips = async () => {
+const submitOrder = async () => {
   loading.value = true
   try {
-    const res = await getAvailableTrips()
-    if (res.code === 200) {
-      availableTrips.value = res.data
-    } else {
-      ElMessage.error(res.message || '获取车次失败')
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    const studentId = userInfo.studentId
+    
+    if (!studentId) {
+        alert('请先登录')
+        router.push('/login')
+        return
     }
-  } catch (error) {
-    ElMessage.error('获取车次失败')
+
+    const res = await createOrder({
+        ...form,
+        studentId
+    })
+    
+    if (res.code === 200) {
+        alert('申请提交成功！请等待管理员审核。')
+        router.push('/student/trips')
+    } else {
+        alert(res.message || '提交失败')
+    }
+  } catch (e) {
+    console.error(e)
+    alert('提交异常')
   } finally {
     loading.value = false
   }
 }
-
-const handleBook = async (row) => {
-  try {
-    await ElMessageBox.confirm(`确认要预约 ${row.plateNumber} 吗？系统会自动生成邀请码。`, '确认预约', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    const res = await bookTrip(row.plateNumber)
-    if (res.code === 200) {
-      ElMessage.success(`预约成功！邀请码：${res.data.inviteCode}`)
-      router.push('/student/trips')
-    } else {
-      ElMessage.error(res.message || '预约失败')
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('操作失败')
-    }
-  }
-}
-
-const handleJoin = async () => {
-  if (!inviteCode.value) {
-    ElMessage.warning('请输入邀请码')
-    return
-  }
-  try {
-    const res = await joinByInviteCode(inviteCode.value.trim())
-    if (res.code === 200) {
-      ElMessage.success('加入成功')
-      router.push('/student/trips')
-    } else {
-      ElMessage.error(res.message || '加入失败')
-    }
-  } catch (error) {
-    ElMessage.error('操作失败')
-  }
-}
-
-onMounted(() => {
-  fetchAvailableTrips()
-})
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.page-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.card-actions {
-  display: flex;
-  gap: 8px;
+.content-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-.tips {
-  margin-top: 20px;
-  color: #909399;
-  font-size: 14px;
+.header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.header h2 {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: #718096;
+}
+
+.apply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #8b5cf6;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit-btn:hover {
+  background: #7c3aed;
+}
+
+.submit-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
 }
 </style>

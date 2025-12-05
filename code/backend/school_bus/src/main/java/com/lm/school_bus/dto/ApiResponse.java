@@ -1,27 +1,26 @@
 package com.lm.school_bus.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ApiResponse<T> {
-
-    private int code;
+    private Integer code;
     private String message;
     private T data;
 
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(200, "成功", data);
     }
-
+    
     public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(200, message, data);
     }
 
-    public static <T> ApiResponse<T> failure(int code, String message) {
+    public static <T> ApiResponse<T> error(Integer code, String message) {
         return new ApiResponse<>(code, message, null);
     }
 }

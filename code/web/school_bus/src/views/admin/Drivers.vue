@@ -1,97 +1,160 @@
 <template>
-  <div class="drivers-container">
-    <el-card shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span>Ë¾»ú¹ÜÀí</span>
-          <el-button type="primary" @click="dialogVisible = true" :icon="Plus">ĞÂÔöË¾»ú</el-button>
-        </div>
-      </template>
-      <el-table :data="drivers" style="width: 100%" stripe border>
-        <el-table-column prop="name" label="ĞÕÃû" width="180">
-          <template #default="scope">
-            <div style="display: flex; align-items: center">
-              <el-avatar :size="30" :icon="UserFilled" style="margin-right: 10px" />
-              {{ scope.row.name }}
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="phone" label="µç»°ºÅÂë" />
-      </el-table>
-    </el-card>
+  <div class="page-container">
+    <div class="header-row">
+      <h2 class="page-title">è½¦è¾†èµ„æºç®¡ç†</h2>
+      <button class="btn-add" @click="showAddModal = true">+ æ–°å¢è½¦è¾†</button>
+    </div>
 
-    <el-dialog v-model="dialogVisible" title="ĞÂÔöË¾»ú" width="500px">
-      <el-form :model="form" label-width="80px" size="large">
-        <el-form-item label="ĞÕÃû">
-          <el-input v-model="form.name" placeholder="ÇëÊäÈëĞÕÃû" :prefix-icon="User"></el-input>
-        </el-form-item>
-        <el-form-item label="µç»°">
-          <el-input v-model="form.phone" placeholder="ÇëÊäÈëµç»°ºÅÂë" :prefix-icon="Phone"></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">È¡Ïû</el-button>
-          <el-button type="primary" @click="handleAdd">È·¶¨</el-button>
-        </span>
-      </template>
-    </el-dialog>
+    <div class="grid-container">
+      <div v-for="bus in buses" :key="bus.busId" class="bus-card">
+        <div class="bus-icon">è½¦</div>
+        <div class="bus-info">
+          <h3>{{ bus.plateNumber }}</h3>
+          <p class="type">{{ bus.carType }}</p>
+          <p class="driver">å¸æœºï¼š{{ bus.driverName }}</p>
+        </div>
+        <div class="bus-status">
+          <span :class="['status-dot', bus.isActive ? 'free' : 'busy']"></span>
+          {{ bus.isActive ? 'ç©ºé—²' : 'ä½¿ç”¨ä¸­' }}
+        </div>
+        <button class="btn-delete" @click="deleteBus(bus.busId)">Ã—</button>
+      </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div v-if="showAddModal" class="modal-overlay">
+      <div class="modal">
+        <h3>æ–°å¢è½¦è¾†</h3>
+        <form @submit.prevent="addBus">
+          <div class="form-group">
+            <label>è½¦ç‰Œå·</label>
+            <input v-model="form.plateNumber" required placeholder="ä¾‹å¦‚ï¼šäº¬AÂ·88888">
+          </div>
+          <div class="form-group">
+            <label>è½¦å‹</label>
+            <select v-model="form.carType" required>
+              <option>å¤§å·´ (45åº§)</option>
+              <option>ä¸­å·´ (20åº§)</option>
+              <option>å•†åŠ¡è½¦ (7åº§)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>å¸æœºå§“å</label>
+            <input v-model="form.driverName" required placeholder="è¯·è¾“å…¥å¸æœºå§“å">
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="showAddModal = false">å–æ¶ˆ</button>
+            <button type="submit" class="btn-primary">ä¿å­˜</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getAllDrivers, addDriver } from '../../api'
-import { Plus, User, Phone, UserFilled } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi } from '../../api'
 
-const drivers = ref([])
-const dialogVisible = ref(false)
-const form = ref({
-  name: '',
-  phone: ''
-})
+const buses = ref([])
+const showAddModal = ref(false)
+const form = reactive({ plateNumber: '', carType: '', driverName: '' })
 
-const fetchDrivers = async () => {
-  try {
-    const res = await getAllDrivers()
-    if (res.code === 200) {
-      drivers.value = res.data
+const fetchBuses = async () => {
+    try {
+        const res = await getAllBuses()
+        if (res.code === 200) {
+            buses.value = res.data
+        }
+    } catch (e) {
+        console.error(e)
     }
-  } catch (error) {
-    ElMessage.error('»ñÈ¡Ë¾»úÁĞ±íÊ§°Ü')
-  }
-}
-
-const handleAdd = async () => {
-  if (!form.value.name || !form.value.phone) {
-    ElMessage.warning('ÇëÌîĞ´ÍêÕûĞÅÏ¢')
-    return
-  }
-  try {
-    const res = await addDriver(form.value)
-    if (res.code === 200) {
-      ElMessage.success('Ìí¼Ó³É¹¦')
-      dialogVisible.value = false
-      form.value = { name: '', phone: '' }
-      fetchDrivers()
-    } else {
-      ElMessage.error(res.message || 'Ìí¼ÓÊ§°Ü')
-    }
-  } catch (error) {
-    ElMessage.error('²Ù×÷Ê§°Ü')
-  }
 }
 
 onMounted(() => {
-  fetchDrivers()
+  fetchBuses()
 })
+
+const addBus = async () => {
+    try {
+        const res = await addBusApi({
+            ...form,
+            isActive: true
+        })
+        if (res.code === 200) {
+            showAddModal.value = false
+            form.plateNumber = ''
+            form.carType = ''
+            form.driverName = ''
+            fetchBuses()
+        } else {
+            alert(res.message)
+        }
+    } catch (e) {
+        alert('æ·»åŠ å¤±è´¥')
+    }
+}
+
+const deleteBus = async (id) => {
+    if(confirm('ç¡®å®šè¦åˆ é™¤å—ï¼Ÿ')) {
+        try {
+            const res = await deleteBusApi(id)
+            if (res.code === 200) {
+                fetchBuses()
+            } else {
+                alert(res.message)
+            }
+        } catch (e) {
+            alert('åˆ é™¤å¤±è´¥')
+        }
+    }
+}
 </script>
 
 <style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.page-container { padding: 2rem; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.page-title { color: #1f2937; margin: 0; }
+
+.btn-add {
+  background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
 }
+
+.grid-container {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;
+}
+
+.bus-card {
+  background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  display: flex; align-items: center; gap: 1rem; transition: transform 0.2s;
+}
+.bus-card:hover { transform: translateY(-5px); }
+
+.bus-icon { font-size: 2.5rem; background: #f3f4f6; padding: 10px; border-radius: 12px; }
+.bus-info h3 { margin: 0; color: #1f2937; }
+.bus-info .type { color: #6b7280; font-size: 0.9rem; margin: 4px 0; }
+.bus-info .driver { color: #9ca3af; font-size: 0.85rem; margin: 0; }
+
+.bus-status { margin-left: auto; display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; color: #6b7280; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 4px; }
+.status-dot.free { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.status-dot.busy { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+.btn-delete {
+    position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem;
+}
+.btn-delete:hover { color: #ef4444; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal { background: white; padding: 2rem; border-radius: 12px; width: 400px; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; color: #4b5563; }
+.form-group input, .form-group select {
+  width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+.btn-primary { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 </style>

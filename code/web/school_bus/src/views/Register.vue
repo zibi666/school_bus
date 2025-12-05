@@ -6,55 +6,27 @@
         <p class="subtitle">注册您的账号以开始使用</p>
       </div>
       <el-card class="register-card" shadow="always">
-        <el-tabs v-model="activeTab" class="custom-tabs">
-          <el-tab-pane label="学生注册" name="student">
-            <el-form :model="studentForm" label-width="60px" size="large">
-              <el-form-item label="学号">
-                <el-input v-model="studentForm.studentId" placeholder="请输入学号" :prefix-icon="User" />
-              </el-form-item>
-              <el-form-item label="姓名">
-                <el-input v-model="studentForm.name" placeholder="请输入姓名" :prefix-icon="User" />
-              </el-form-item>
-              <el-form-item label="性别">
-                <el-select v-model="studentForm.gender" placeholder="请选择性别" style="width: 100%">
-                  <el-option label="男" value="男"></el-option>
-                  <el-option label="女" value="女"></el-option>
-                </el-select>
-              </el-form-item>
-              <el-form-item label="班级">
-                <el-input v-model="studentForm.clazz" placeholder="请输入班级" :prefix-icon="School" />
-              </el-form-item>
-              <el-form-item label="密码">
-                <el-input v-model="studentForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" class="full-width-btn" @click="handleStudentRegister">注册</el-button>
-              </el-form-item>
-              <div class="form-footer">
-                <el-button link type="primary" @click="$router.push('/login')">已有账号？去登录</el-button>
-              </div>
-            </el-form>
-          </el-tab-pane>
-          <el-tab-pane label="管理员注册" name="admin">
-            <el-form :model="adminForm" label-width="60px" size="large">
-              <el-form-item label="账号">
-                <el-input v-model="adminForm.username" placeholder="请输入账号" :prefix-icon="UserFilled" />
-              </el-form-item>
-              <el-form-item label="姓名">
-                <el-input v-model="adminForm.name" placeholder="请输入姓名" :prefix-icon="User" />
-              </el-form-item>
-              <el-form-item label="密码">
-                <el-input v-model="adminForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" class="full-width-btn" @click="handleAdminRegister">注册</el-button>
-              </el-form-item>
-              <div class="form-footer">
-                <el-button link type="primary" @click="$router.push('/login')">已有账号？去登录</el-button>
-              </div>
-            </el-form>
-          </el-tab-pane>
-        </el-tabs>
+        <h3 style="text-align: center; margin-bottom: 20px; color: #333;">学生注册</h3>
+        <el-form :model="studentForm" label-width="60px" size="large">
+          <el-form-item label="学号">
+            <el-input v-model="studentForm.studentId" placeholder="请输入学号" :prefix-icon="User" />
+          </el-form-item>
+          <el-form-item label="姓名">
+            <el-input v-model="studentForm.name" placeholder="请输入姓名" :prefix-icon="User" />
+          </el-form-item>
+          <el-form-item label="所在地">
+            <el-input v-model="studentForm.location" placeholder="请输入所在地 (如: 南校区)" :prefix-icon="School" />
+          </el-form-item>
+          <el-form-item label="密码">
+            <el-input v-model="studentForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" class="full-width-btn" @click="handleStudentRegister">注册</el-button>
+          </el-form-item>
+          <div class="form-footer">
+            <el-button link type="primary" @click="$router.push('/login')">已有账号？去登录</el-button>
+          </div>
+        </el-form>
       </el-card>
     </div>
   </div>
@@ -64,43 +36,25 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock, UserFilled, School } from '@element-plus/icons-vue'
-import { registerStudent, registerAdmin } from '../api'
+import { User, Lock, School } from '@element-plus/icons-vue'
+import { registerStudent } from '../api'
 
 const router = useRouter()
-const activeTab = ref('student')
 
 const studentForm = ref({
   studentId: '',
   name: '',
-  gender: '',
-  clazz: '',
-  password: ''
-})
-
-const adminForm = ref({
-  username: '',
-  name: '',
+  location: '',
   password: ''
 })
 
 const handleStudentRegister = async () => {
+  if (!studentForm.value.studentId || !studentForm.value.password) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
   try {
     const res = await registerStudent(studentForm.value)
-    if (res.code === 200) {
-      ElMessage.success('注册成功，请登录')
-      router.push('/login')
-    } else {
-      ElMessage.error(res.message || '注册失败')
-    }
-  } catch (error) {
-    ElMessage.error('注册异常')
-  }
-}
-
-const handleAdminRegister = async () => {
-  try {
-    const res = await registerAdmin(adminForm.value)
     if (res.code === 200) {
       ElMessage.success('注册成功，请登录')
       router.push('/login')

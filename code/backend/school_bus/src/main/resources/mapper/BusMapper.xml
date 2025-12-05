@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lm.school_bus.mapper.BusMapper">
+
+    <resultMap id="BaseResultMap" type="com.lm.school_bus.entity.Bus">
+        <id column="bus_id" property="busId" />
+        <result column="plate_number" property="plateNumber" />
+        <result column="car_type" property="carType" />
+        <result column="driver_name" property="driverName" />
+        <result column="is_active" property="isActive" />
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM t_bus WHERE bus_id = #{busId}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM t_bus
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="busId">
+        INSERT INTO t_bus (plate_number, car_type, driver_name, is_active)
+        VALUES (#{plateNumber}, #{carType}, #{driverName}, #{isActive})
+    </insert>
+
+    <update id="update">
+        UPDATE t_bus
+        SET plate_number = #{plateNumber},
+            car_type = #{carType},
+            driver_name = #{driverName},
+            is_active = #{isActive}
+        WHERE bus_id = #{busId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_bus WHERE bus_id = #{busId}
+    </delete>
+
+</mapper>

@@ -1,187 +1,220 @@
 <template>
   <div class="login-container">
-    <div class="login-content">
-      <div class="login-header">
-        <h1 class="title">学生汽车包车预定系统</h1>
-        <p class="subtitle">便捷 · 安全 · 舒适</p>
+    <div class="glass-card">
+      <h2 class="title">校园包车系统</h2>
+      
+      <!-- Role Switcher -->
+      <div class="role-switch">
+        <button 
+          :class="['switch-btn', role === 'student' ? 'active' : '']" 
+          @click="role = 'student'"
+        >
+          学生端
+        </button>
+        <button 
+          :class="['switch-btn', role === 'admin' ? 'active' : '']" 
+          @click="role = 'admin'"
+        >
+          管理员
+        </button>
       </div>
-      <el-card class="login-card" shadow="always">
-        <el-tabs v-model="activeTab" class="custom-tabs">
-          <el-tab-pane label="学生登录" name="student">
-            <el-form :model="studentForm" label-width="0" size="large">
-              <el-form-item>
-                <el-input v-model="studentForm.studentId" placeholder="请输入学号" :prefix-icon="User" />
-              </el-form-item>
-              <el-form-item>
-                <el-input v-model="studentForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" class="full-width-btn" @click="handleStudentLogin">登录</el-button>
-              </el-form-item>
-              <div class="form-footer">
-                <el-button link type="primary" @click="$router.push('/register')">没有账号？去注册</el-button>
-              </div>
-            </el-form>
-          </el-tab-pane>
-          <el-tab-pane label="管理员登录" name="admin">
-            <el-form :model="adminForm" label-width="0" size="large">
-              <el-form-item>
-                <el-input v-model="adminForm.username" placeholder="请输入账号" :prefix-icon="UserFilled" />
-              </el-form-item>
-              <el-form-item>
-                <el-input v-model="adminForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" class="full-width-btn" @click="handleAdminLogin">登录</el-button>
-              </el-form-item>
-            </el-form>
-          </el-tab-pane>
-        </el-tabs>
-      </el-card>
+
+      <form @submit.prevent="handleLogin">
+        <div class="input-group">
+          <label>{{ role === 'student' ? '学号' : '管理员账号' }}</label>
+          <input 
+            type="text" 
+            v-model="form.username" 
+            :placeholder="role === 'student' ? '请输入学号' : '请输入账号'"
+            required
+          >
+        </div>
+        
+        <div class="input-group">
+          <label>密码</label>
+          <input 
+            type="password" 
+            v-model="form.password" 
+            placeholder="请输入密码"
+            required
+          >
+        </div>
+
+        <button type="submit" class="submit-btn">
+          {{ loading ? '登录中...' : '立即登录' }}
+        </button>
+      </form>
+
+      <p class="footer-text" v-if="role === 'student'">
+        还没有账号？ <router-link to="/register">去注册</router-link>
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Lock, UserFilled } from '@element-plus/icons-vue'
 import { loginStudent, loginAdmin } from '../api'
 
 const router = useRouter()
-const activeTab = ref('student')
+const role = ref('student')
+const loading = ref(false)
 
-const studentForm = ref({
-  studentId: '',
-  password: ''
-})
-
-const adminForm = ref({
+const form = reactive({
   username: '',
   password: ''
 })
 
-const handleStudentLogin = async () => {
+const handleLogin = async () => {
+  loading.value = true
   try {
-    // 本地测试账号：student / 123456（无需访问后端）
-    if (studentForm.value.studentId === 'student' && studentForm.value.password === '123456') {
-      const mockUser = {
-        role: 'student',
-        studentId: 2021001,
-        name: '测试学生',
-        gender: '男',
-        clazz: '测试班级'
-      }
-      localStorage.setItem('role', mockUser.role)
-      localStorage.setItem('userInfo', JSON.stringify(mockUser))
-      ElMessage.success('测试账号登录成功（本地模拟）')
-      router.push('/student/charter')
-      return
-    }
-
-    const res = await loginStudent(studentForm.value)
-    if (res.code === 200) {
-      const userInfo = res.data.userInfo || {}
-      localStorage.setItem('role', userInfo.role || 'student')
-      localStorage.setItem('userInfo', JSON.stringify(userInfo))
-      ElMessage.success('登录成功')
-      router.push('/student/charter')
+    let res;
+    if (role.value === 'student') {
+      res = await loginStudent({ studentId: form.username, password: form.password })
     } else {
-      ElMessage.error(res.message || '登录失败')
+      res = await loginAdmin({ account: form.username, password: form.password })
     }
-  } catch (error) {
-    ElMessage.error('登录异常')
-  }
-}
 
-const handleAdminLogin = async () => {
-  try {
-    // 本地测试账号：admin / 123456（无需访问后端）
-    if (adminForm.value.username === 'admin' && adminForm.value.password === '123456') {
-      const mockUser = {
-        role: 'admin',
-        adminId: 9001,
-        name: '测试管理员'
+    if (res && res.code === 200) {
+      localStorage.setItem('role', role.value)
+      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      
+      if (role.value === 'student') {
+        router.push('/student/charter')
+      } else {
+        router.push('/admin/trips')
       }
-      localStorage.setItem('role', mockUser.role)
-      localStorage.setItem('userInfo', JSON.stringify(mockUser))
-      ElMessage.success('测试管理员登录成功（本地模拟）')
-      router.push('/admin/trips')
-      return
-    }
-
-    const res = await loginAdmin(adminForm.value)
-    if (res.code === 200) {
-      const userInfo = res.data.userInfo || {}
-      localStorage.setItem('role', userInfo.role || 'admin')
-      localStorage.setItem('userInfo', JSON.stringify(userInfo))
-      ElMessage.success('登录成功')
-      router.push('/admin/trips')
     } else {
-      ElMessage.error(res.message || '登录失败')
+      alert(res.message || '登录失败')
     }
-  } catch (error) {
-    ElMessage.error('登录异常')
+  } catch (e) {
+    console.error(e)
+    alert('登录请求失败')
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
 .login-container {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-size: cover;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-.login-content {
-  text-align: center;
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 3rem;
+  border-radius: 24px;
   width: 100%;
   max-width: 420px;
-  padding: 20px;
-}
-
-.login-header {
-  margin-bottom: 30px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   color: white;
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 600;
-  margin: 0 0 10px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.subtitle {
-  font-size: 16px;
-  opacity: 0.8;
-  margin: 0;
-}
-
-.login-card {
+.role-switch {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
   border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.switch-btn {
+  flex: 1;
+  padding: 10px;
   border: none;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
-.custom-tabs :deep(.el-tabs__nav-wrap::after) {
-  height: 1px;
-  background-color: #e4e7ed;
+.switch-btn.active {
+  background: white;
+  color: #764ba2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.full-width-btn {
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.input-group input {
   width: 100%;
-  font-weight: bold;
-  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s;
 }
 
-.form-footer {
-  text-align: right;
-  margin-top: -10px;
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.input-group input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #a78bfa;
+  background: linear-gradient(to right, #a78bfa, #8b5cf6);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 1rem;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.footer-text a {
+  color: white;
+  text-decoration: underline;
+  font-weight: bold;
 }
 </style>

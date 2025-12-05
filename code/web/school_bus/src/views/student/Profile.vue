@@ -15,8 +15,7 @@
         <el-descriptions :column="1" border size="large" class="info-list">
           <el-descriptions-item label="学号">{{ profile.studentId }}</el-descriptions-item>
           <el-descriptions-item label="姓名">{{ profile.name }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ profile.gender }}</el-descriptions-item>
-          <el-descriptions-item label="班级">{{ profile.clazz }}</el-descriptions-item>
+          <el-descriptions-item label="所在地">{{ profile.location }}</el-descriptions-item>
         </el-descriptions>
       </div>
     </el-card>
@@ -32,10 +31,16 @@ import { UserFilled } from '@element-plus/icons-vue'
 const profile = ref({})
 
 onMounted(async () => {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  if (!userInfo.studentId) return
+
   try {
-    const res = await getStudentProfile()
+    const res = await getStudentProfile(userInfo.studentId)
     if (res.code === 200) {
-      profile.value = res.data
+      profile.value = {
+          ...res.data,
+          role: 'student'
+      }
     }
   } catch (error) {
     ElMessage.error('获取个人信息失败')

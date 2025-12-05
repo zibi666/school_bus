@@ -1,159 +1,78 @@
 package com.lm.school_bus.service;
 
-import com.lm.school_bus.dto.admin.*;
-import com.lm.school_bus.entity.BusSchedule;
-import com.lm.school_bus.entity.Driver;
-import com.lm.school_bus.entity.PassengerInfo;
-import com.lm.school_bus.entity.StudentTicketOrder;
-import com.lm.school_bus.exception.BadRequestException;
-import com.lm.school_bus.exception.ResourceNotFoundException;
-import com.lm.school_bus.repository.BusScheduleRepository;
-import com.lm.school_bus.repository.DriverRepository;
-import com.lm.school_bus.repository.PassengerInfoRepository;
-import com.lm.school_bus.repository.StudentTicketOrderRepository;
+import com.lm.school_bus.entity.Bus;
+import com.lm.school_bus.entity.Order;
+import com.lm.school_bus.mapper.BusMapper;
+import com.lm.school_bus.mapper.OrderMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class AdminService {
 
-    private final BusScheduleRepository busScheduleRepository;
-    private final StudentTicketOrderRepository orderRepository;
-    private final PassengerInfoRepository passengerInfoRepository;
-    private final DriverRepository driverRepository;
+    @Autowired
+    private OrderMapper orderMapper;
 
-    public AdminService(BusScheduleRepository busScheduleRepository,
-                        StudentTicketOrderRepository orderRepository,
-                        PassengerInfoRepository passengerInfoRepository,
-                        DriverRepository driverRepository) {
-        this.busScheduleRepository = busScheduleRepository;
-        this.orderRepository = orderRepository;
-        this.passengerInfoRepository = passengerInfoRepository;
-        this.driverRepository = driverRepository;
+    @Autowired
+    private BusMapper busMapper;
+
+    public List<Order> getAllOrders(String status) {
+        if (status != null && !status.isEmpty()) {
+            return orderMapper.selectByStatusOrderByCreateTimeDesc(status);
+        }
+        return orderMapper.selectAllOrderByCreateTimeDesc();
     }
 
     @Transactional
-    public TripOverviewResponse createTrip(CreateTripRequest request) {
-        String plateNumber = Objects.requireNonNull(request.getPlateNumber(), "车牌不能为空");
-        if (busScheduleRepository.existsById(plateNumber)) {
-            throw new BadRequestException("该车牌已存在车次");
+    public void approveOrder(Integer orderId, Integer busId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
         }
-        BusSchedule schedule = new BusSchedule();
-        schedule.setBusId(plateNumber);
-        schedule.setBusType(request.getVehicleType());
-        schedule.setUseDate(request.getDate());
-        schedule.setOrigin(request.getStartLocation());
-        schedule.setDestination(request.getEndLocation());
-        schedule.setMaxNumber(request.getMaxSeats());
-        schedule.setRemainingSeats(request.getMaxSeats());
-        busScheduleRepository.save(schedule);
-        return buildTripOverview(schedule);
-    }
-
-    @Transactional(readOnly = true)
-    public List<TripOverviewResponse> listTrips() {
-        return busScheduleRepository.findAll().stream()
-                .map(this::buildTripOverview)
-                .sorted(Comparator.comparing(TripOverviewResponse::getDate))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PassengerResponse> listPassengers(String plateNumber) {
-        return passengerInfoRepository.findByBusIdOrderByPassengerSeatAsc(plateNumber).stream()
-                .map(passenger -> PassengerResponse.builder()
-                        .studentId(passenger.getPassengerNumber())
-                        .name(passenger.getPassengerName())
-                        .seatNumber(parseSeat(passenger.getPassengerSeat()))
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public void changeDriver(String plateNumber, String driverName) {
-        Objects.requireNonNull(plateNumber, "plateNumber不能为空");
-        Objects.requireNonNull(driverName, "driverName不能为空");
-        Driver driver = driverRepository.findFirstByName(driverName)
-            .orElseThrow(() -> new ResourceNotFoundException("司机不存在"));
-        StudentTicketOrder order = orderRepository.findById(plateNumber)
-            .orElseThrow(() -> new ResourceNotFoundException("车次不存在"));
-        order.setDriverName(driver.getName());
-        orderRepository.save(order);
-    }
-
-    @Transactional(readOnly = true)
-    public List<DriverResponse> drivers() {
-        return driverRepository.findAll().stream()
-                .map(driver -> DriverResponse.builder()
-                        .name(driver.getName())
-                        .phone(driver.getPhone())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public DriverResponse addDriver(DriverRequest request) {
-        String phone = Objects.requireNonNull(request.getPhone(), "司机电话不能为空");
-        if (driverRepository.existsById(phone)) {
-            throw new BadRequestException("该电话已存在司机");
+        
+        Bus bus = busMapper.selectById(busId);
+        if (bus == null) {
+            throw new RuntimeException("车辆不存在");
         }
-        Driver driver = new Driver();
-        driver.setName(request.getName());
-        driver.setPhone(phone);
-        driverRepository.save(driver);
-        return DriverResponse.builder()
-                .name(driver.getName())
-                .phone(driver.getPhone())
-                .build();
+
+        if (!bus.getIsActive()) {
+            throw new RuntimeException("该车辆正在使用中，无法分配");
+        }
+
+        // 更新订单
+        order.setStatus("已通过");
+        order.setBusId(busId);
+        orderMapper.update(order);
+
+        // 更新车辆状态
+        bus.setIsActive(false);
+        busMapper.update(bus);
     }
 
-    @Transactional
-    public void deleteDriver(String phone) {
-        Objects.requireNonNull(phone, "司机电话不能为空");
-        if (!driverRepository.existsById(phone)) {
-            throw new ResourceNotFoundException("司机不存在");
+    public void rejectOrder(Integer orderId, String reason) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
         }
-        driverRepository.deleteById(phone);
+        
+        order.setStatus("已拒绝");
+        order.setRejectReason(reason);
+        orderMapper.update(order);
     }
 
-    private TripOverviewResponse buildTripOverview(BusSchedule schedule) {
-        String busId = Objects.requireNonNull(schedule.getBusId());
-        StudentTicketOrder order = orderRepository.findById(busId).orElse(null);
-        String driverName = "-";
-        String driverPhone = "-";
-        int passengerCount = 0;
-        if (order != null) {
-            passengerCount = order.getNumberOfPassengers();
-            driverName = order.getDriverName();
-            if (driverName != null) {
-                Driver driver = driverRepository.findFirstByName(driverName).orElse(null);
-                driverPhone = driver != null ? driver.getPhone() : "-";
-            }
-        }
-        return TripOverviewResponse.builder()
-                .plateNumber(schedule.getBusId())
-                .vehicleType(schedule.getBusType())
-                .date(schedule.getUseDate())
-                .startLocation(schedule.getOrigin())
-                .endLocation(schedule.getDestination())
-                .passengerCount(passengerCount)
-                .maxSeats(schedule.getMaxNumber())
-                .remainingSeats(schedule.getRemainingSeats())
-                .driverName(driverName)
-                .driverPhone(driverPhone)
-                .build();
+    public List<Bus> getAllBuses() {
+        return busMapper.selectAll();
     }
 
-    private int parseSeat(String seat) {
-        try {
-            return Integer.parseInt(seat);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    public Bus addBus(Bus bus) {
+        busMapper.insert(bus);
+        return bus;
+    }
+
+    public void deleteBus(Integer busId) {
+        busMapper.deleteById(busId);
     }
 }
