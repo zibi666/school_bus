@@ -1,42 +1,70 @@
 <template>
   <div class="page-container">
     <div class="header-row">
-      <h2>我的订单</h2>
-      <button class="new-btn" @click="$router.push('/student/charter')">+ 新申请</button>
+      <div>
+        <h2 class="page-title">我的订单</h2>
+        <p class="subhead">查看您的包车申请记录与审核状态。</p>
+      </div>
+      <button class="btn-primary" @click="$router.push('/student/charter')">
+        <span class="icon-plus">+</span> 新申请
+      </button>
     </div>
 
-    <div class="orders-grid">
-      <div v-for="order in orders" :key="order.id" class="order-card" :class="statusClass(order.status)">
-        <div class="card-header">
-          <span class="status-badge">{{ order.status }}</span>
-          <span class="date">{{ order.createTime }}</span>
+    <div v-if="orders.length === 0" class="empty-state">
+      <div class="empty-icon">📂</div>
+      <p>暂无申请记录</p>
+      <button class="btn-secondary" @click="$router.push('/student/charter')">去申请</button>
+    </div>
+
+    <div v-else class="orders-grid">
+      <div 
+        v-for="order in orders" 
+        :key="order.id" 
+        class="order-card"
+        :class="statusClass(order.status)"
+      >
+        <div class="card-top">
+          <div class="status-badge">
+            <span class="dot"></span>
+            {{ order.status }}
+          </div>
+          <span class="date">{{ formatDate(order.createTime) }}</span>
         </div>
         
         <div class="card-body">
-          <h3>{{ order.destination }}</h3>
-          <p class="info-row"><i class="icon"></i> {{ order.usageTime }}</p>
-          <p class="info-row"><i class="icon"></i> {{ order.requestedCarType }}</p>
+          <h3 class="destination">{{ order.destination }}</h3>
+          
+          <div class="info-row">
+            <span class="label">时间</span>
+            <span class="value">{{ order.usageTime }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">车型</span>
+            <span class="value">{{ order.requestedCarType }}</span>
+          </div>
           
           <!-- Details for Approved -->
-          <div v-if="order.status === '已通过' && order.busInfo" class="approved-details">
-            <div class="detail-item">
-              <span class="label">车牌号</span>
-              <span class="value">{{ order.busInfo.plateNumber }}</span>
+          <div v-if="order.status === '已通过' && order.busInfo" class="approved-box">
+            <div class="detail-row">
+              <span class="d-label">车牌</span>
+              <span class="d-value highlight">{{ order.busInfo.plateNumber }}</span>
             </div>
-            <div class="detail-item">
-              <span class="label">司机</span>
-              <span class="value">{{ order.busInfo.driverName }}</span>
+            <div class="detail-row">
+              <span class="d-label">司机</span>
+              <span class="d-value">{{ order.busInfo.driverName }}</span>
             </div>
           </div>
 
           <!-- Reason for Rejected -->
-          <div v-if="order.status === '已拒绝'" class="reject-reason">
-            拒绝理由：{{ order.rejectReason }}
+          <div v-if="order.status === '已拒绝'" class="reject-box">
+            <p class="reject-reason">拒绝理由：{{ order.rejectReason }}</p>
           </div>
         </div>
 
         <div class="card-footer" v-if="order.status === '审核中'">
-          <button class="cancel-btn" @click="handleCancelOrder(order.orderId)">取消申请</button>
+          <button class="btn-danger-ghost" @click="handleCancelOrder(order.orderId)">
+            取消申请
+          </button>
         </div>
       </div>
     </div>
@@ -70,7 +98,7 @@ const fetchOrders = async () => {
             }
         }
       }
-      orders.value = list
+      orders.value = list.reverse() // Show newest first
     }
   } catch (e) {
     console.error(e)
@@ -85,6 +113,11 @@ const statusClass = (status) => {
   if (status === '已通过') return 'status-approved'
   if (status === '已拒绝') return 'status-rejected'
   return 'status-pending'
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString()
 }
 
 const handleCancelOrder = async (id) => {
@@ -105,125 +138,205 @@ const handleCancelOrder = async (id) => {
 
 <style scoped>
 .page-container {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
+  padding: 8px;
 }
 
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
 }
 
-.new-btn {
-  background: #8b5cf6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
+.page-title {
+  margin: 0 0 4px;
+  color: #f8fafc;
+  font-size: 28px;
+}
+
+.subhead {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.icon-plus {
+  margin-right: 6px;
   font-weight: bold;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
 }
 
 .orders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 .order-card {
-  background: white;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #f0f0f0;
-  transition: transform 0.2s;
-  display: flex;
-  flex-direction: column;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .order-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.card-header {
+/* Status Colors */
+.status-approved {
+  border-left: 4px solid #10b981;
+}
+.status-rejected {
+  border-left: 4px solid #ef4444;
+}
+.status-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-top {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .status-badge {
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.status-pending .status-badge { background: #fef3c7; color: #d97706; }
-.status-approved .status-badge { background: #d1fae5; color: #059669; }
-.status-rejected .status-badge { background: #fee2e2; color: #dc2626; }
+.status-approved .status-badge { color: #34d399; background: rgba(16, 185, 129, 0.1); }
+.status-rejected .status-badge { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+.status-pending .status-badge { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
 
-.status-approved { border-left: 5px solid #059669; }
-.status-rejected { border-left: 5px solid #dc2626; }
-.status-pending { border-left: 5px solid #d97706; }
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
 
-.card-body h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1f2937;
+.date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.destination {
+  margin: 0 0 12px;
+  color: #f8fafc;
+  font-size: 18px;
 }
 
 .info-row {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin: 0.25rem 0;
-}
-
-.approved-details {
-  margin-top: 1rem;
-  background: #f9fafb;
-  padding: 0.8rem;
-  border-radius: 8px;
-}
-
-.detail-item {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-.price-tag {
-  text-align: right;
-  font-size: 1.2rem;
+.label {
+  color: var(--text-secondary);
+}
+
+.value {
+  color: #e2e8f0;
+}
+
+.approved-box {
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.d-label {
+  color: #a7f3d0;
+}
+
+.d-value {
+  color: #ecfdf5;
+}
+
+.highlight {
   font-weight: bold;
-  color: #8b5cf6;
-  margin-top: 0.5rem;
+  color: #34d399;
+}
+
+.reject-box {
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.1);
 }
 
 .reject-reason {
-  margin-top: 1rem;
-  background: #fef2f2;
-  color: #b91c1c;
-  padding: 0.8rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 13px;
+  color: #fca5a5;
 }
 
 .card-footer {
-  margin-top: auto;
-  padding-top: 1rem;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   text-align: right;
 }
 
-.cancel-btn {
-  color: #ef4444;
-  background: none;
-  border: none;
+.btn-danger-ghost {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
   cursor: pointer;
-  font-size: 0.9rem;
+  transition: all 0.2s;
 }
-.cancel-btn:hover { text-decoration: underline; }
+
+.btn-danger-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
 </style>

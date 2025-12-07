@@ -1,9 +1,14 @@
 <template>
   <div class="page-container">
-    <h2 class="page-title">订单审核</h2>
+    <div class="header-row">
+      <div>
+        <h2 class="page-title">订单审核</h2>
+        <p class="subhead">处理学生包车申请，调度车辆资源。</p>
+      </div>
+    </div>
     
-    <div class="table-container">
-      <table>
+    <div class="table-wrapper">
+      <table class="glass-table">
         <thead>
           <tr>
             <th>订单号</th>
@@ -21,14 +26,21 @@
             <td>{{ order.studentId }}</td>
             <td>{{ order.destination }}</td>
             <td>{{ order.usageTime }}</td>
-            <td><span class="tag">{{ order.requestedCarType }}</span></td>
+            <td><span class="car-tag">{{ order.requestedCarType }}</span></td>
             <td>
-              <span :class="['status-tag', statusClass(order.status)]">{{ order.status }}</span>
+              <span :class="['status-pill', statusClass(order.status)]">
+                <span class="dot"></span>
+                {{ order.status }}
+              </span>
             </td>
             <td>
               <div v-if="order.status === '审核中'" class="actions">
-                <button class="btn-approve" @click="openApprove(order)">通过</button>
-                <button class="btn-reject" @click="openReject(order)">拒绝</button>
+                <button class="btn-icon-approve" @click="openApprove(order)" title="通过">
+                  ✓
+                </button>
+                <button class="btn-icon-reject" @click="openReject(order)" title="拒绝">
+                  ✕
+                </button>
               </div>
               <span v-else class="text-gray">-</span>
             </td>
@@ -38,34 +50,50 @@
     </div>
 
     <!-- Approve Modal -->
-    <div v-if="showApproveModal" class="modal-overlay">
-      <div class="modal">
-        <h3>审核通过 - 分配车辆</h3>
-        <div class="form-group">
-          <label>选择车辆</label>
-          <select v-model="approveForm.busId">
-            <option v-for="bus in availableBuses" :key="bus.busId" :value="bus.busId">
-              {{ bus.plateNumber }} ({{ bus.driverName }})
-            </option>
-          </select>
+    <div v-if="showApproveModal" class="modal-overlay" @click.self="showApproveModal = false">
+      <div class="modal glass-modal">
+        <div class="modal-header">
+          <h3>审核通过 - 分配车辆</h3>
+          <button class="close-btn" @click="showApproveModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>选择车辆</label>
+            <select v-model="approveForm.busId" class="glass-input">
+              <option value="" disabled>请选择车辆</option>
+              <option v-for="bus in availableBuses" :key="bus.busId" :value="bus.busId">
+                {{ bus.plateNumber }} ({{ bus.driverName }}) - {{ bus.carType }}
+              </option>
+            </select>
+          </div>
         </div>
         <div class="modal-actions">
-          <button @click="showApproveModal = false">取消</button>
-          <button class="btn-primary" @click="confirmApprove">确认</button>
+          <button class="btn-ghost" @click="showApproveModal = false">取消</button>
+          <button class="btn-primary-admin" @click="confirmApprove">确认分配</button>
         </div>
       </div>
     </div>
 
     <!-- Reject Modal -->
-    <div v-if="showRejectModal" class="modal-overlay">
-      <div class="modal">
-        <h3>拒绝申请</h3>
-        <div class="form-group">
-          <label>拒绝理由</label>
-          <textarea v-model="rejectForm.reason" placeholder="请输入拒绝原因..."></textarea>
+    <div v-if="showRejectModal" class="modal-overlay" @click.self="showRejectModal = false">
+      <div class="modal glass-modal">
+        <div class="modal-header">
+          <h3>拒绝申请</h3>
+          <button class="close-btn" @click="showRejectModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>拒绝理由</label>
+            <textarea 
+              v-model="rejectForm.reason" 
+              placeholder="请输入拒绝原因..." 
+              class="glass-input"
+              rows="3"
+            ></textarea>
+          </div>
         </div>
         <div class="modal-actions">
-          <button @click="showRejectModal = false">取消</button>
+          <button class="btn-ghost" @click="showRejectModal = false">取消</button>
           <button class="btn-danger" @click="confirmReject">确认拒绝</button>
         </div>
       </div>
@@ -90,7 +118,7 @@ const fetchData = async () => {
     try {
         const res = await getAllOrders()
         if (res.code === 200) {
-            orders.value = res.data
+            orders.value = res.data.reverse()
         }
         
         const busRes = await getAllBuses()
@@ -106,24 +134,29 @@ onMounted(() => {
   fetchData()
 })
 
-const statusClass = (s) => {
-  if(s === '已通过') return 'success'
-  if(s === '已拒绝') return 'danger'
-  return 'warning'
+const statusClass = (status) => {
+  if (status === '已通过') return 'status-approved'
+  if (status === '已拒绝') return 'status-rejected'
+  return 'status-pending'
 }
 
 const openApprove = (order) => {
-  currentOrder.value = order
-  showApproveModal.value = true
+    currentOrder.value = order
+    approveForm.busId = ''
+    showApproveModal.value = true
 }
 
 const openReject = (order) => {
-  currentOrder.value = order
-  showRejectModal.value = true
+    currentOrder.value = order
+    rejectForm.reason = ''
+    showRejectModal.value = true
 }
 
 const confirmApprove = async () => {
-    if (!approveForm.busId) return alert('请选择车辆')
+    if (!approveForm.busId) {
+        alert('请选择车辆')
+        return
+    }
     try {
         const res = await approveOrder({
             orderId: currentOrder.value.orderId,
@@ -141,10 +174,14 @@ const confirmApprove = async () => {
 }
 
 const confirmReject = async () => {
+    if (!rejectForm.reason) {
+        alert('请输入拒绝理由')
+        return
+    }
     try {
         const res = await rejectOrder({
             orderId: currentOrder.value.orderId,
-            reason: rejectForm.reason
+            rejectReason: rejectForm.reason
         })
         if (res.code === 200) {
             showRejectModal.value = false
@@ -159,42 +196,248 @@ const confirmReject = async () => {
 </script>
 
 <style scoped>
-.page-container { padding: 2rem; }
-.page-title { margin-bottom: 2rem; color: #1f2937; }
+.page-container {
+  padding: 8px;
+}
 
-.table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+.header-row {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  color: #f8fafc;
+  font-size: 28px;
+}
+
+.subhead {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.table-wrapper {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-1);
 }
 
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #f3f4f6; }
-th { background: #f9fafb; font-weight: 600; color: #4b5563; }
-tr:hover { background: #f9fafb; }
+.glass-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e2e8f0;
+}
 
-.tag { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
-.status-tag { padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; }
-.status-tag.warning { background: #fef3c7; color: #d97706; }
-.status-tag.success { background: #d1fae5; color: #059669; }
-.status-tag.danger { background: #fee2e2; color: #dc2626; }
+.glass-table th {
+  text-align: left;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
 
-.actions { display: flex; gap: 0.5rem; }
-.btn-approve { background: #10b981; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
-.btn-reject { background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+.glass-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+}
 
+.glass-table tr:last-child td {
+  border-bottom: none;
+}
+
+.glass-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.font-mono {
+  font-family: monospace;
+  color: #64748b;
+}
+
+.car-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-approved { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+.status-rejected { background: rgba(244, 63, 94, 0.1); color: #f43f5e; }
+.status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon-approve,
+.btn-icon-reject {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-icon-approve {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.btn-icon-approve:hover {
+  background: #10b981;
+  color: white;
+}
+
+.btn-icon-reject {
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
+}
+
+.btn-icon-reject:hover {
+  background: #f43f5e;
+  color: white;
+}
+
+.text-gray {
+  color: #64748b;
+}
+
+/* Modal Styles (Shared) */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
 }
-.modal { background: white; padding: 2rem; border-radius: 12px; width: 400px; }
-.form-group { margin-bottom: 1rem; }
-.form-group label { display: block; margin-bottom: 0.5rem; color: #4b5563; }
-.form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;
+
+.glass-modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-.btn-primary { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-.btn-danger { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #f8fafc;
+  outline: none;
+  width: 100%;
+}
+
+.glass-input:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary-admin {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
 </style>

@@ -1,38 +1,61 @@
 <template>
   <div class="page-container">
     <div class="header-row">
-      <h2 class="page-title">车辆资源管理</h2>
-      <button class="btn-add" @click="showAddModal = true">+ 新增车辆</button>
+      <div>
+        <h2 class="page-title">车辆资源管理</h2>
+        <p class="subhead">管理校车车队与司机信息。</p>
+      </div>
+      <button class="btn-primary-admin" @click="showAddModal = true">
+        <span class="icon-plus">+</span> 新增车辆
+      </button>
     </div>
 
     <div class="grid-container">
       <div v-for="bus in buses" :key="bus.busId" class="bus-card">
-        <div class="bus-icon">车</div>
+        <div class="card-top">
+          <div class="bus-icon-box">
+            🚌
+          </div>
+          <div class="status-badge" :class="bus.isActive ? 'status-free' : 'status-busy'">
+            <span class="dot"></span>
+            {{ bus.isActive ? '空闲' : '使用中' }}
+          </div>
+        </div>
+        
         <div class="bus-info">
-          <h3>{{ bus.plateNumber }}</h3>
-          <p class="type">{{ bus.carType }}</p>
-          <p class="driver">司机：{{ bus.driverName }}</p>
+          <h3 class="plate-number">{{ bus.plateNumber }}</h3>
+          <p class="info-row">
+            <span class="label">车型</span>
+            <span class="value">{{ bus.carType }}</span>
+          </p>
+          <p class="info-row">
+            <span class="label">司机</span>
+            <span class="value">{{ bus.driverName }}</span>
+          </p>
         </div>
-        <div class="bus-status">
-          <span :class="['status-dot', bus.isActive ? 'free' : 'busy']"></span>
-          {{ bus.isActive ? '空闲' : '使用中' }}
-        </div>
-        <button class="btn-delete" @click="deleteBus(bus.busId)">×</button>
+
+        <button class="btn-delete-ghost" @click="deleteBus(bus.busId)">
+          删除车辆
+        </button>
       </div>
     </div>
 
     <!-- Add Modal -->
-    <div v-if="showAddModal" class="modal-overlay">
-      <div class="modal">
-        <h3>新增车辆</h3>
-        <form @submit.prevent="addBus">
+    <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
+      <div class="modal glass-modal">
+        <div class="modal-header">
+          <h3>新增车辆</h3>
+          <button class="close-btn" @click="showAddModal = false">×</button>
+        </div>
+        <form @submit.prevent="addBus" class="modal-form">
           <div class="form-group">
             <label>车牌号</label>
-            <input v-model="form.plateNumber" required placeholder="例如：京A·88888">
+            <input v-model="form.plateNumber" required placeholder="例如：京A·88888" class="glass-input">
           </div>
           <div class="form-group">
             <label>车型</label>
-            <select v-model="form.carType" required>
+            <select v-model="form.carType" required class="glass-input">
+              <option value="" disabled>请选择车型</option>
               <option>大巴 (45座)</option>
               <option>中巴 (20座)</option>
               <option>商务车 (7座)</option>
@@ -40,11 +63,11 @@
           </div>
           <div class="form-group">
             <label>司机姓名</label>
-            <input v-model="form.driverName" required placeholder="请输入司机姓名">
+            <input v-model="form.driverName" required placeholder="请输入司机姓名" class="glass-input">
           </div>
           <div class="modal-actions">
-            <button type="button" @click="showAddModal = false">取消</button>
-            <button type="submit" class="btn-primary">保存</button>
+            <button type="button" class="btn-ghost" @click="showAddModal = false">取消</button>
+            <button type="submit" class="btn-primary-admin">保存车辆</button>
           </div>
         </form>
       </div>
@@ -112,49 +135,248 @@ const deleteBus = async (id) => {
 </script>
 
 <style scoped>
-.page-container { padding: 2rem; }
-.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-.page-title { color: #1f2937; margin: 0; }
+.page-container {
+  padding: 8px;
+}
 
-.btn-add {
-  background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  color: #f8fafc;
+  font-size: 28px;
+}
+
+.subhead {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.btn-primary-admin {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary-admin:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.4);
 }
 
 .grid-container {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .bus-card {
-  background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  display: flex; align-items: center; gap: 1rem; transition: transform 0.2s;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
-.bus-card:hover { transform: translateY(-5px); }
 
-.bus-icon { font-size: 2.5rem; background: #f3f4f6; padding: 10px; border-radius: 12px; }
-.bus-info h3 { margin: 0; color: #1f2937; }
-.bus-info .type { color: #6b7280; font-size: 0.9rem; margin: 4px 0; }
-.bus-info .driver { color: #9ca3af; font-size: 0.85rem; margin: 0; }
-
-.bus-status { margin-left: auto; display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; color: #6b7280; }
-.status-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 4px; }
-.status-dot.free { background: #10b981; box-shadow: 0 0 8px #10b981; }
-.status-dot.busy { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
-.btn-delete {
-    position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem;
+.bus-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(244, 63, 94, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
-.btn-delete:hover { color: #ef4444; }
 
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.bus-icon-box {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.status-free {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.status-busy {
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.plate-number {
+  margin: 0 0 12px;
+  color: #f8fafc;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.label {
+  color: var(--text-secondary);
+}
+
+.value {
+  color: #e2e8f0;
+}
+
+.btn-delete-ghost {
+  width: 100%;
+  margin-top: 16px;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete-ghost:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Modal Styles */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
 }
-.modal { background: white; padding: 2rem; border-radius: 12px; width: 400px; }
-.form-group { margin-bottom: 1rem; }
-.form-group label { display: block; margin-bottom: 0.5rem; color: #4b5563; }
-.form-group input, .form-group select {
-  width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;
+
+.glass-modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-.btn-primary { background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #f8fafc;
+  outline: none;
+}
+
+.glass-input:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 </style>

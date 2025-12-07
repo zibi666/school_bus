@@ -1,9 +1,9 @@
 <template>
   <div class="layout-container">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="logo">
         包车系统
+        <span class="logo-sub">Student Space</span>
       </div>
       <nav class="nav-menu">
         <router-link to="/student/charter" class="nav-item" active-class="active">
@@ -21,7 +21,6 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -46,26 +45,36 @@ const logout = () => {
 <style scoped>
 .layout-container {
   display: flex;
-  height: 100vh;
-  background: #f3f4f6;
+  min-height: 100vh;
+  background: transparent;
 }
 
 .sidebar {
   width: 260px;
-  background: white;
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.9), rgba(16, 37, 86, 0.9));
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e7eb;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  backdrop-filter: blur(12px);
   z-index: 10;
 }
 
 .logo {
   padding: 2rem;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  color: #7c3aed;
-  border-bottom: 1px solid #f3f4f6;
+  color: #f8fafc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.2;
+}
+
+.logo-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 8px;
 }
 
 .nav-menu {
@@ -79,7 +88,7 @@ const logout = () => {
 .nav-item {
   padding: 12px 16px;
   border-radius: 12px;
-  color: #4b5563;
+  color: #cbd5e1;
   text-decoration: none;
   font-weight: 500;
   transition: all 0.2s;
@@ -89,34 +98,35 @@ const logout = () => {
 }
 
 .nav-item:hover {
-  background: #f9fafb;
-  color: #7c3aed;
+  background: #0f172a;
+  color: #e0f2fe;
 }
 
 .nav-item.active {
-  background: #f5f3ff;
-  color: #7c3aed;
-  font-weight: 600;
+  background: linear-gradient(120deg, #7c3aed, #22d3ee);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 10px 26px rgba(124, 58, 237, 0.25);
 }
 
 .logout-section {
   padding: 1.5rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .logout-btn {
   width: 100%;
   padding: 10px;
-  border: 1px solid #fee2e2;
-  background: #fef2f2;
-  color: #dc2626;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0f172a;
+  color: #fca5a5;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .logout-btn:hover {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.18);
 }
 
 .main-content {
