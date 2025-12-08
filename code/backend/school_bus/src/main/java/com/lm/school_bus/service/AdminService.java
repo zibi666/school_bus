@@ -99,7 +99,21 @@ public class AdminService {
         return bus;
     }
 
+    @Transactional
     public void deleteBus(Integer busId) {
+        // 查询所有与该车辆关联的订单
+        List<Order> orders = orderMapper.selectByBusId(busId);
+        
+        // 将所有关联的订单更新为已拒绝状态
+        if (orders != null && !orders.isEmpty()) {
+            for (Order order : orders) {
+                order.setStatus("已拒绝");
+                order.setRejectReason("车辆已删除");
+                orderMapper.update(order);
+            }
+        }
+        
+        // 删除车辆
         busMapper.deleteById(busId);
     }
 }

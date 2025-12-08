@@ -13,4 +13,5 @@ public interface OrderMapper {
     int update(Order order);
     int deleteById(Integer orderId);
     List<Order> selectByStudentIdOrderByCreateTimeDesc(String studentId);
+    List<Order> selectByBusId(Integer busId);
 }

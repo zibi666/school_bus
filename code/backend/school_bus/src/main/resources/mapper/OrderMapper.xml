@@ -84,4 +84,10 @@
         ORDER BY o.create_time DESC
     </select>
 
+    <select id="selectByBusId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_order
+        WHERE bus_id = #{busId}
+    </select>
+
 </mapper>
