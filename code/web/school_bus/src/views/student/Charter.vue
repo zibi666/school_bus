@@ -131,8 +131,9 @@ const submitOrder = async () => {
 <style scoped>
 .page-container {
   padding: 24px;
-  max-width: 100%;
   width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -151,28 +152,40 @@ const submitOrder = async () => {
 
 .stat-ribbon {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
 .stat {
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(8, 15, 30, 0.9);
+  padding: 16px 12px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
   text-align: center;
-  box-shadow: var(--shadow-2);
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  transition: all 0.3s ease;
+}
+
+.stat:hover {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.3);
+  transform: translateY(-2px);
 }
 
 .stat-num {
   display: block;
-  color: #f8fafc;
+  color: #22d3ee;
   font-weight: 800;
+  font-size: 24px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
-  color: var(--text-secondary);
-  font-size: 12px;
+  color: #000000;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .grid {
@@ -189,6 +202,8 @@ const submitOrder = async () => {
   background: rgba(12, 18, 34, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow-1);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .card-head {
@@ -263,7 +278,7 @@ const submitOrder = async () => {
 
 .mini-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
