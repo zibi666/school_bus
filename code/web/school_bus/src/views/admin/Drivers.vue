@@ -148,8 +148,13 @@ const deleteBus = async (id) => {
 
 .page-title {
   margin: 0 0 4px;
-  color: #f8fafc;
-  font-size: 28px;
+  font-size: 32px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .subhead {

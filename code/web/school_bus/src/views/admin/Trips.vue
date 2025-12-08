@@ -206,8 +206,13 @@ const confirmReject = async () => {
 
 .page-title {
   margin: 0 0 4px;
-  color: #f8fafc;
-  font-size: 28px;
+  font-size: 32px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .subhead {
@@ -233,9 +238,9 @@ const confirmReject = async () => {
   text-align: left;
   padding: 16px 20px;
   background: rgba(255, 255, 255, 0.03);
-  color: #94a3b8;
-  font-weight: 600;
-  font-size: 13px;
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -255,7 +260,8 @@ const confirmReject = async () => {
 
 .font-mono {
   font-family: monospace;
-  color: #64748b;
+  color: #60a5fa;
+  font-weight: 600;
 }
 
 .car-tag {
