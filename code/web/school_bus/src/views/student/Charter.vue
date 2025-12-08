@@ -130,15 +130,17 @@ const submitOrder = async () => {
 
 <style scoped>
 .page-container {
-  padding: 8px;
+  padding: 24px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .header-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: center;
-  margin-bottom: 18px;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 
 .page-title {
@@ -177,6 +179,8 @@ const submitOrder = async () => {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 18px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .card {
@@ -218,6 +222,7 @@ const submitOrder = async () => {
 .form-group input,
 .form-group select {
   width: 100%;
+  box-sizing: border-box; 
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -249,6 +254,7 @@ const submitOrder = async () => {
 .tips {
   color: var(--text-secondary);
   padding-left: 18px;
+  color: #fff; 
   margin: 0 0 14px;
   display: flex;
   flex-direction: column;

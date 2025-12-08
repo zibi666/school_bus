@@ -9,27 +9,27 @@
               <span class="avatar-text">{{ getAvatarText(profile.name) }}</span>
             </div>
           </div>
-          <h2 class="user-name">{{ profile.name || '¼ÓÔØÖĞ...' }}</h2>
-          <span class="user-role">{{ profile.role === 'student' ? 'Ñ§Éú' : '¹ÜÀíÔ±' }}</span>
+          <h2 class="user-name">{{ profile.name || 'åŠ è½½ä¸­...' }}</h2>
+          <span class="user-role">{{ profile.role === 'student' ? 'å­¦ç”Ÿ' : 'ç®¡ç†å‘˜' }}</span>
         </div>
 
         <div class="info-section">
           <div class="info-item">
-            <span class="label">Ñ§ºÅ</span>
+            <span class="label">å­¦å·</span>
             <span class="value">{{ profile.studentId }}</span>
           </div>
           <div class="info-item">
-            <span class="label">ËùÔÚµØ</span>
+            <span class="label">æ‰€åœ¨åœ°</span>
             <span class="value">{{ profile.location }}</span>
           </div>
           <div class="info-item">
-            <span class="label">ÕË»§×´Ì¬</span>
-            <span class="value status-active">Õı³£</span>
+            <span class="label">è´¦æˆ·çŠ¶æ€</span>
+            <span class="value status-active">æ­£å¸¸</span>
           </div>
         </div>
 
         <div class="actions">
-          <button class="btn-secondary full-width">ĞŞ¸ÄÃÜÂë</button>
+          <button class="btn-secondary full-width">ä¿®æ”¹ä¿¡æ¯</button>
         </div>
       </div>
     </div>
@@ -42,8 +42,8 @@ import { getStudentProfile } from '../../api'
 
 const fallbackProfile = {
   studentId: '2313001044',
-  name: 'ÑîÖ¾ÓÂ',
-  location: '½­ËÕÊ¡ÄÏ¾©ÊĞ½­ÄşÇø',
+  name: 'æå¼º',
+  location: 'æ±Ÿè‹çœå—äº¬å¸‚é¼“æ¥¼åŒº',
   role: 'student'
 }
 
