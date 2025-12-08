@@ -20,6 +20,7 @@ export const loginAdmin = (data) => api.post('/auth/admin/login', data)
 
 // Student
 export const getStudentProfile = (studentId) => api.get(`/student/profile/${studentId}`)
+export const updateStudentProfile = (studentId, data) => api.put(`/student/profile/${studentId}`, data)
 export const createOrder = (data) => api.post('/student/order', data)
 export const getMyOrders = (studentId) => api.get(`/student/orders/${studentId}`)
 export const cancelOrder = (orderId) => api.post(`/student/order/cancel/${orderId}`)

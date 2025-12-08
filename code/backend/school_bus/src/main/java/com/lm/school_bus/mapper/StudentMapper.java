@@ -8,4 +8,5 @@ public interface StudentMapper {
     Student selectById(String studentId);
     int insert(Student student);
     int countById(String studentId);
+    int updateById(Student student);
 }

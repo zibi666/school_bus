@@ -24,4 +24,10 @@
         SELECT COUNT(*) FROM student_info WHERE student_id = #{studentId}
     </select>
 
+    <update id="updateById">
+        UPDATE student_info
+        SET name = #{name}, password = #{password}, location = #{location}
+        WHERE student_id = #{studentId}
+    </update>
+
 </mapper>

@@ -26,6 +26,7 @@
 | `/api/student/orders/{studentId}` | `GET`    | 获取我的订单 | 无（路径参数：studentId）                                    |
 | `/api/student/order/cancel/{orderId}` | `POST`   | 取消订单     | 无（仅"审核中"状态可调用）                                   |
 | `/api/student/profile/{studentId}` | `GET`    | 获取个人信息 | 无（路径参数：studentId）                                    |
+| `/api/student/profile/{studentId}` | `PUT`    | 修改个人信息 | `{ "name": "...", "location": "...", "password": "..." }`   |
 | `/api/student/bus/{busId}`        | `GET`    | 获取车辆详情 | 无（路径参数：busId）                                        |
 
 ------

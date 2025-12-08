@@ -58,4 +58,14 @@ public class StudentService {
     public Bus getBus(Integer busId) {
         return busMapper.selectById(busId);
     }
+
+    public void updateProfile(String studentId, Student student) {
+        Student existing = studentMapper.selectById(studentId);
+        if (existing == null) {
+            throw new RuntimeException("学生不存在");
+        }
+        
+        student.setStudentId(studentId);
+        studentMapper.updateById(student);
+    }
 }

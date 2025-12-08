@@ -54,4 +54,10 @@ public class StudentController {
         Bus bus = studentService.getBus(busId);
         return ApiResponse.success("获取成功", bus);
     }
+
+    @PutMapping("/profile/{studentId}")
+    public ApiResponse<Void> updateProfile(@PathVariable String studentId, @RequestBody Student student) {
+        studentService.updateProfile(studentId, student);
+        return ApiResponse.success("更新成功", null);
+    }
 }

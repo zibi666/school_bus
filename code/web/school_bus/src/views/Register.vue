@@ -221,7 +221,7 @@ const handleStudentRegister = async () => {
 }
 
 .text-gradient {
-  background: var(--gradient-text);
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0e7ff 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -368,7 +368,7 @@ const handleStudentRegister = async () => {
   width: 100%;
   padding: 12px;
   margin-top: 8px;
-  background: var(--gradient-secondary);
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
   border: none;
   border-radius: 12px;
   color: #fff;
