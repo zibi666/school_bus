@@ -111,10 +111,15 @@ const addBus = async () => {
             form.driverName = ''
             fetchBuses()
         } else {
-            alert(res.message)
+            alert(res.message || '添加失败')
         }
     } catch (e) {
-        alert('添加失败')
+        // 错误响应包含 code 和 message
+        if (e.message) {
+            alert(e.message)
+        } else {
+            alert('添加失败')
+        }
     }
 }
 

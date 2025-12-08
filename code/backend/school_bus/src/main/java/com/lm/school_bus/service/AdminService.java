@@ -2,6 +2,7 @@ package com.lm.school_bus.service;
 
 import com.lm.school_bus.entity.Bus;
 import com.lm.school_bus.entity.Order;
+import com.lm.school_bus.exception.BusinessException;
 import com.lm.school_bus.mapper.BusMapper;
 import com.lm.school_bus.mapper.OrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +99,7 @@ public class AdminService {
         // 检查车牌号是否重复
         Bus existingBus = busMapper.selectByPlateNumber(bus.getPlateNumber());
         if (existingBus != null) {
-            throw new RuntimeException("该车牌号已存在，请勿添加重复车牌号");
+            throw new BusinessException(400, "该车牌号已存在，请勿添加重复车牌号");
         }
         busMapper.insert(bus);
         return bus;

@@ -10,6 +10,10 @@ api.interceptors.response.use(response => {
   return response.data
 }, error => {
   console.error('API Error:', error)
+  // 返回错误响应体中的数据（包括code、message等）
+  if (error.response && error.response.data) {
+    return Promise.reject(error.response.data)
+  }
   return Promise.reject(error)
 })
 
