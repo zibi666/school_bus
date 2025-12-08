@@ -119,6 +119,8 @@ const handleStudentRegister = async () => {
     const res = await registerStudent(studentForm)
     if (res.code === 200) {
       alert('注册成功，请登录')
+      // 返回登录页时恢复滚动
+      document.body.style.overflow = 'auto'
       router.push('/login')
     } else {
       alert(res.message || '注册失败')
@@ -132,8 +134,12 @@ const handleStudentRegister = async () => {
 
 <style scoped>
 .auth-container {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100vh;
+  overflow: hidden;
   background-color: #020617;
   background-image: 
     radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
@@ -141,10 +147,9 @@ const handleStudentRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #fff;
+  z-index: 1000;
 }
 
 /* 动态背景球体 */
@@ -182,8 +187,8 @@ const handleStudentRegister = async () => {
   max-width: 1100px;
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 80px;
-  padding: 40px;
+  gap: 70px;
+  padding: 40px 60px 40px 40px;
   z-index: 1;
   align-items: center;
 }
@@ -217,6 +222,7 @@ const handleStudentRegister = async () => {
 
 .text-gradient {
   background: var(--gradient-text);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
@@ -273,6 +279,9 @@ const handleStudentRegister = async () => {
   backdrop-filter: blur(20px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   position: relative;
+  max-height: min(85vh, 720px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .auth-card::before {
@@ -306,7 +315,7 @@ const handleStudentRegister = async () => {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .form-group label {
@@ -323,6 +332,7 @@ const handleStudentRegister = async () => {
 
 .input-wrapper input {
   width: 100%;
+  box-sizing: border-box; 
   padding: 12px 16px;
   padding-right: 40px;
   background: rgba(0, 0, 0, 0.2);
@@ -410,6 +420,11 @@ const handleStudentRegister = async () => {
     padding: 20px 20px 40px;
   }
 
+  .auth-card {
+    padding: 30px;
+    max-height: none;
+  }
+
   .auth-hero {
     text-align: center;
     margin-bottom: 20px;
@@ -428,5 +443,16 @@ const handleStudentRegister = async () => {
   }
   
   .headline { font-size: 2.2rem; }
+}
+
+@media (max-height: 720px) {
+  .auth-content {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .auth-card {
+    max-height: calc(100vh - 80px);
+  }
 }
 </style>

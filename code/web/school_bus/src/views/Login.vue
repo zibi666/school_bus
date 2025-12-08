@@ -157,6 +157,8 @@ const handleLogin = async () => {
     if (res && res.code === 200) {
       localStorage.setItem('role', role.value)
       localStorage.setItem('userInfo', JSON.stringify(res.data))
+      // 恢复滚动条
+      document.body.style.overflow = 'auto'
 
       if (role.value === 'student') {
         router.push('/student/charter')
@@ -168,7 +170,9 @@ const handleLogin = async () => {
     }
   } catch (e) {
     console.error(e)
-    alert('登录请求失败，请检查网络')
+    // 优先显示后端返回的错误信息
+    const errorMessage = e.response?.data?.message || e.message || '登录请求失败，请检查网络'
+    alert(errorMessage)
   } finally {
     loading.value = false
   }
@@ -182,17 +186,19 @@ const handleLogin = async () => {
 }
 
 .auth-container {
-  /* 关键：限制高度，禁止滚动 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100vh;
-  width: 100vw;
   overflow: hidden;
-  position: relative;
   background-color: #f8fafc; /* 浅色背景 */
   font-family: 'PingFang SC', 'Inter', system-ui, sans-serif;
   color: #1e293b;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 /* --- 动态多彩背景 (Light Mode) --- */

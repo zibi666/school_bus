@@ -2,6 +2,7 @@ package com.lm.school_bus.service;
 
 import com.lm.school_bus.entity.Admin;
 import com.lm.school_bus.entity.Student;
+import com.lm.school_bus.exception.BusinessException;
 import com.lm.school_bus.mapper.AdminMapper;
 import com.lm.school_bus.mapper.StudentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +22,12 @@ public class AuthService {
         if (student != null && student.getPassword().equals(password)) {
             return student;
         }
-        throw new RuntimeException("学号或密码错误");
+        throw new BusinessException(401, "学号或密码错误");
     }
 
     public Student studentRegister(Student student) {
         if (studentMapper.countById(student.getStudentId()) > 0) {
-            throw new RuntimeException("该学号已注册");
+            throw new BusinessException(400, "该学号已注册");
         }
         studentMapper.insert(student);
         return student;
@@ -37,6 +38,6 @@ public class AuthService {
         if (admin != null && admin.getPassword().equals(password)) {
             return admin;
         }
-        throw new RuntimeException("账号或密码错误");
+        throw new BusinessException(401, "账号或密码错误");
     }
 }
