@@ -38,4 +38,8 @@
         DELETE FROM t_bus WHERE bus_id = #{busId}
     </delete>
 
+    <select id="selectByPlateNumber" resultMap="BaseResultMap">
+        SELECT * FROM t_bus WHERE plate_number = #{plateNumber}
+    </select>
+
 </mapper>

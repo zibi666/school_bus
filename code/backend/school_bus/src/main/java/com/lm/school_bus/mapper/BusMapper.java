@@ -11,4 +11,5 @@ public interface BusMapper {
     int insert(Bus bus);
     int update(Bus bus);
     int deleteById(Integer busId);
+    Bus selectByPlateNumber(String plateNumber);
 }

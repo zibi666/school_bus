@@ -95,6 +95,11 @@ public class AdminService {
     }
 
     public Bus addBus(Bus bus) {
+        // 检查车牌号是否重复
+        Bus existingBus = busMapper.selectByPlateNumber(bus.getPlateNumber());
+        if (existingBus != null) {
+            throw new RuntimeException("该车牌号已存在，请勿添加重复车牌号");
+        }
         busMapper.insert(bus);
         return bus;
     }
