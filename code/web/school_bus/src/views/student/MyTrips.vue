@@ -247,13 +247,14 @@ const handleCancelOrder = async (id) => {
 
 .date {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: #ffffff;
 }
 
 .destination {
   margin: 0 0 12px;
-  color: #f8fafc;
+  color: #ffffff;
   font-size: 18px;
+  font-weight: 700;
 }
 
 .info-row {
@@ -264,11 +265,11 @@ const handleCancelOrder = async (id) => {
 }
 
 .label {
-  color: var(--text-secondary);
+  color: #ffffff;
 }
 
 .value {
-  color: #e2e8f0;
+  color: #ffffff;
 }
 
 .approved-box {

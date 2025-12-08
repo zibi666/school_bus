@@ -145,9 +145,39 @@ const submitOrder = async () => {
 }
 
 .page-title {
-  margin: 4px 0 6px;
+  margin: 12px 0 10px;
   color: #f8fafc;
-  font-size: 28px;
+  font-size: 36px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.subhead {
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 400;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  border-radius: 24px;
+  color: #22d3ee;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px;
+  backdrop-filter: blur(8px);
 }
 
 .stat-ribbon {
@@ -218,6 +248,41 @@ const submitOrder = async () => {
   color: #f8fafc;
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  border-radius: 20px;
+  color: #22d3ee;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.badge:hover {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.2);
+}
+
 .apply-form {
   display: flex;
   flex-direction: column;
@@ -254,11 +319,48 @@ const submitOrder = async () => {
 }
 
 .actions {
-  margin-top: 4px;
+  margin-top: 80px;
 }
 
 .btn-primary {
   width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .card-side h4 {
@@ -279,11 +381,11 @@ const submitOrder = async () => {
 .mini-cards {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 6px;
 }
 
 .mini {
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.08);
@@ -292,12 +394,12 @@ const submitOrder = async () => {
 
 .tag {
   display: inline-flex;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 10px;
   border: 1px solid rgba(34, 211, 238, 0.3);
   color: #22d3ee;
-  font-size: 12px;
-  margin-bottom: 6px;
+  font-size: 10px;
+  margin-bottom: 3px;
 }
 
 @media (max-width: 1024px) {
