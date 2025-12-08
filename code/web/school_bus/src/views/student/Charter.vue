@@ -406,6 +406,19 @@ const submitOrder = async () => {
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* 修复自动填充样式 */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px rgba(15, 23, 42, 0.86) inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  border-color: rgba(34, 211, 238, 0.5) !important;
+}
+
+.form-group input:-webkit-autofill::first-line {
+  color: #f8fafc;
+}
+
 .form-group select {
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
@@ -661,6 +674,18 @@ const submitOrder = async () => {
   background: rgba(0, 0, 0, 0.2);
   color: #f8fafc;
   font-size: 14px;
+}
+
+/* 修复日期和时间输入框的图标颜色 */
+.date-section input[type="date"]::-webkit-calendar-picker-indicator,
+.time-item input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  cursor: pointer;
+}
+
+.date-section input[type="date"],
+.time-item input[type="time"] {
+  color-scheme: dark;
 }
 
 .date-section input:focus,
