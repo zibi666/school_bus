@@ -36,12 +36,53 @@
 
           <div class="form-group">
             <label for="usage">使用时间段</label>
-            <input id="usage" type="text" v-model="form.usageTime" placeholder="例如：12月20日 9:00-12:00" required />
+            <div class="time-picker-container">
+              <div class="time-input" @click="showTimePicker = true">
+                <span v-if="form.usageTime" class="time-display">{{ form.usageTime }}</span>
+                <span v-else class="time-placeholder">请选择时间段</span>
+                <svg class="time-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              
+              <div v-if="showTimePicker" class="time-picker-modal" @click.self="showTimePicker = false">
+                <div class="time-picker-content">
+                  <div class="time-picker-header">
+                    <h3>选择时间段</h3>
+                    <button type="button" class="close-btn" @click="showTimePicker = false">×</button>
+                  </div>
+                  
+                  <div class="time-picker-body">
+                    <div class="date-section">
+                      <label>日期</label>
+                      <input type="date" v-model="timePickerData.date" />
+                    </div>
+                    
+                    <div class="time-section">
+                      <div class="time-item">
+                        <label>开始时间</label>
+                        <input type="time" v-model="timePickerData.startTime" />
+                      </div>
+                      <div class="time-item">
+                        <label>结束时间</label>
+                        <input type="time" v-model="timePickerData.endTime" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="time-picker-footer">
+                    <button type="button" class="btn-cancel" @click="showTimePicker = false">取消</button>
+                    <button type="button" class="btn-confirm" @click="confirmTimeSelection">确认</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
             <label for="carType">需求车型</label>
-            <select id="carType" v-model="form.requestedCarType" required>
+            <select id="carType" v-model="form.requestedCarType" required:class="{ 'is-empty': form.requestedCarType === '' }">
               <option value="" disabled>请选择车型</option>
               <option>大巴 (45座)</option>
               <option>中巴 (20座)</option>
@@ -90,11 +131,48 @@ import { createOrder } from '../../api'
 
 const router = useRouter()
 const loading = ref(false)
+const showTimePicker = ref(false)
+const timePickerData = reactive({
+  date: '',
+  startTime: '',
+  endTime: ''
+})
 const form = reactive({
   destination: '',
   usageTime: '',
   requestedCarType: ''
 })
+
+const formatDateForDisplay = (date, startTime, endTime) => {
+  if (!date || !startTime || !endTime) return ''
+  
+  const dateObj = new Date(date)
+  const month = dateObj.getMonth() + 1
+  const day = dateObj.getDate()
+  
+  return `${month}月${day}日 ${startTime}-${endTime}`
+}
+
+const confirmTimeSelection = () => {
+  if (!timePickerData.date || !timePickerData.startTime || !timePickerData.endTime) {
+    alert('请填写完整的时间信息')
+    return
+  }
+  
+  if (timePickerData.startTime >= timePickerData.endTime) {
+    alert('开始时间必须早于结束时间')
+    return
+  }
+  
+  // 格式化用于显示
+  form.usageTime = formatDateForDisplay(
+    timePickerData.date,
+    timePickerData.startTime,
+    timePickerData.endTime
+  )
+  
+  showTimePicker.value = false
+}
 
 const submitOrder = async () => {
   loading.value = true
@@ -108,8 +186,16 @@ const submitOrder = async () => {
         return
     }
 
+    // 构建ISO格式的时间戳发送给后端
+    const startDateTime = `${timePickerData.date}T${timePickerData.startTime}:00`
+    const endDateTime = `${timePickerData.date}T${timePickerData.endTime}:00`
+
     const res = await createOrder({
-        ...form,
+        destination: form.destination,
+        usageTime: form.usageTime,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        requestedCarType: form.requestedCarType,
         studentId
     })
     
@@ -135,6 +221,14 @@ const submitOrder = async () => {
   overflow: hidden;
   box-sizing: border-box;
 }
+/* --- 统一设置字体大小 --- */
+.form-group input, 
+.form-group select, 
+.time-input {
+  font-size: 14px; /* 统一字体大小 */
+}
+
+
 
 .header-row {
   display: flex;
@@ -312,6 +406,17 @@ const submitOrder = async () => {
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
+.form-group select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 50px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
 .form-group input:focus,
 .form-group select:focus {
   border-color: rgba(34, 211, 238, 0.5);
@@ -406,5 +511,199 @@ const submitOrder = async () => {
   .grid {
     grid-template-columns: 1fr;
   }
+}
+
+.time-picker-container {
+  position: relative;
+}
+
+.time-input {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box; 
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.86);
+  color: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.time-input:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.time-input:focus {
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+}
+
+.time-display {
+  color: #f8fafc;
+}
+
+.time-placeholder {
+  color: #64748b;
+}
+
+.time-icon {
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.time-picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.time-picker-content {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.time-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.time-picker-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #f8fafc;
+}
+
+.time-picker-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.date-section,
+.time-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.time-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-section label,
+.time-item label {
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.date-section input,
+.time-item input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.date-section input:focus,
+.time-item input:focus {
+  outline: none;
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.time-picker-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+}
+
+.btn-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 211, 238, 0.4);
 }
 </style>
