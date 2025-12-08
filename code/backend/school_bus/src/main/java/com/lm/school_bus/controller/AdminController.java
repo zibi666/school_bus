@@ -42,6 +42,15 @@ public class AdminController {
         return ApiResponse.success("已拒绝", null);
     }
 
+    @PostMapping("/order/revoke")
+    public ApiResponse<Void> revokeOrder(@RequestBody Map<String, Object> params) {
+        Integer orderId = (Integer) params.get("orderId");
+        String reason = (String) params.get("reason");
+        
+        adminService.revokeOrder(orderId, reason);
+        return ApiResponse.success("订单已撤销", null);
+    }
+
     @GetMapping("/buses")
     public ApiResponse<List<Bus>> getAllBuses() {
         List<Bus> buses = adminService.getAllBuses();

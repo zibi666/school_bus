@@ -42,6 +42,11 @@
                   ✕
                 </button>
               </div>
+              <div v-else-if="order.status === '已通过'" class="actions">
+                <button class="btn-icon-revoke" @click="openRevoke(order)" title="撤销">
+                  ↶
+                </button>
+              </div>
               <span v-else class="text-gray">-</span>
             </td>
           </tr>
@@ -51,9 +56,12 @@
 
     <!-- Approve Modal -->
     <div v-if="showApproveModal" class="modal-overlay" @click.self="showApproveModal = false">
-      <div class="modal glass-modal">
+      <div class="modal glass-modal approve-modal">
         <div class="modal-header">
-          <h3>审核通过 - 分配车辆</h3>
+          <div>
+            <h3>✓ 审核通过</h3>
+            <p class="modal-subtitle">为订单分配车辆</p>
+          </div>
           <button class="close-btn" @click="showApproveModal = false">×</button>
         </div>
         <div class="modal-body">
@@ -76,9 +84,12 @@
 
     <!-- Reject Modal -->
     <div v-if="showRejectModal" class="modal-overlay" @click.self="showRejectModal = false">
-      <div class="modal glass-modal">
+      <div class="modal glass-modal reject-modal">
         <div class="modal-header">
-          <h3>拒绝申请</h3>
+          <div>
+            <h3>✕ 拒绝申请</h3>
+            <p class="modal-subtitle">请说明拒绝原因</p>
+          </div>
           <button class="close-btn" @click="showRejectModal = false">×</button>
         </div>
         <div class="modal-body">
@@ -88,7 +99,7 @@
               v-model="rejectForm.reason" 
               placeholder="请输入拒绝原因..." 
               class="glass-input"
-              rows="3"
+              rows="4"
             ></textarea>
           </div>
         </div>
@@ -98,21 +109,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Revoke Modal -->
+    <div v-if="showRevokeModal" class="modal-overlay" @click.self="showRevokeModal = false">
+      <div class="modal glass-modal revoke-modal">
+        <div class="modal-header">
+          <div>
+            <h3>🔄 撤销订单</h3>
+            <p class="modal-subtitle">订单将返回待审核状态</p>
+          </div>
+          <button class="close-btn" @click="showRevokeModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>撤销理由</label>
+            <textarea 
+              v-model="revokeForm.reason" 
+              placeholder="请输入撤销原因..." 
+              class="glass-input"
+              rows="4"
+            ></textarea>
+          </div>
+          <div class="warning-box">
+            ⚠️ 撤销后该订单状态将变为"已拒绝"，分配的车辆将被释放。
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-ghost" @click="showRevokeModal = false">取消</button>
+          <button class="btn-revoke" @click="confirmRevoke">确认撤销</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getAllOrders, getAllBuses, approveOrder, rejectOrder } from '../../api'
+import { getAllOrders, getAllBuses, approveOrder, rejectOrder, revokeOrder } from '../../api'
 
 const orders = ref([])
 const availableBuses = ref([])
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
+const showRevokeModal = ref(false)
 const currentOrder = ref(null)
 
 const approveForm = reactive({ busId: '' })
 const rejectForm = reactive({ reason: '' })
+const revokeForm = reactive({ reason: '' })
 
 const fetchData = async () => {
     try {
@@ -152,6 +196,12 @@ const openReject = (order) => {
     showRejectModal.value = true
 }
 
+const openRevoke = (order) => {
+    currentOrder.value = order
+    revokeForm.reason = ''
+    showRevokeModal.value = true
+}
+
 const confirmApprove = async () => {
     if (!approveForm.busId) {
         alert('请选择车辆')
@@ -181,10 +231,31 @@ const confirmReject = async () => {
     try {
         const res = await rejectOrder({
             orderId: currentOrder.value.orderId,
-            rejectReason: rejectForm.reason
+            reason: rejectForm.reason
         })
         if (res.code === 200) {
             showRejectModal.value = false
+            fetchData()
+        } else {
+            alert(res.message)
+        }
+    } catch (e) {
+        alert('操作失败')
+    }
+}
+
+const confirmRevoke = async () => {
+    if (!revokeForm.reason) {
+        alert('请输入撤销理由')
+        return
+    }
+    try {
+        const res = await revokeOrder({
+            orderId: currentOrder.value.orderId,
+            reason: revokeForm.reason
+        })
+        if (res.code === 200) {
+            showRevokeModal.value = false
             fetchData()
         } else {
             alert(res.message)
@@ -336,6 +407,47 @@ const confirmReject = async () => {
   color: white;
 }
 
+.btn-icon-revoke {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(249, 115, 22, 0.1) 100%);
+  color: #fbbf24;
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-icon-revoke::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.4s ease;
+}
+
+.btn-icon-revoke:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(249, 115, 22, 0.2) 100%);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fcd34d;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+  transform: translateY(-2px);
+}
+
+.btn-icon-revoke:hover::before {
+  left: 100%;
+}
+
 .text-gray {
   color: #64748b;
 }
@@ -356,98 +468,270 @@ const confirmReject = async () => {
 }
 
 .glass-modal {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.15);
   border-radius: 20px;
-  padding: 24px;
+  padding: 28px;
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(244, 63, 94, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.modal-body {
+  margin-bottom: 24px;
 }
 
 .modal-header h3 {
-  margin: 0;
+  margin: 0 0 4px;
   color: #f8fafc;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.reject-modal .modal-header h3 {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.revoke-modal {
+  border-color: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(245, 158, 11, 0.1);
+}
+
+.warning-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+.modal-subtitle {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .close-btn {
-  background: transparent;
-  border: none;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.15);
   color: #94a3b8;
   font-size: 24px;
   cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.close-btn:hover {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.3);
+  color: #f43f5e;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
 .form-group label {
-  color: #cbd5e1;
-  font-size: 14px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(244, 63, 94, 0.15);
+  border-radius: 12px;
+  padding: 12px 16px;
   color: #f8fafc;
   outline: none;
   width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
 }
 
 .glass-input:focus {
   border-color: #f43f5e;
-  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.1);
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
+  background: rgba(15, 23, 42, 0.95);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
   color: #cbd5e1;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #f8fafc;
 }
 
 .btn-primary-admin {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
-  padding: 8px 20px;
+  padding: 12px 28px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary-admin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn-primary-admin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary-admin:hover::before {
+  left: 100%;
+}
+
+.approve-modal {
+  border-color: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1);
+}
+
+.reject-modal {
+  border-color: rgba(239, 68, 68, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.1);
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
-  padding: 8px 20px;
+  padding: 12px 28px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+}
+
+.btn-danger::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.btn-danger:hover::before {
+  left: 100%;
+}
+
+.btn-revoke {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.5px;
+}
+
+.btn-revoke::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn-revoke:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.btn-revoke:hover::before {
+  left: 100%;
 }
 </style>

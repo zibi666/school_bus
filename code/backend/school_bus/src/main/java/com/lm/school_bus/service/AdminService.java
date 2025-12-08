@@ -63,6 +63,33 @@ public class AdminService {
         orderMapper.update(order);
     }
 
+    @Transactional
+    public void revokeOrder(Integer orderId, String reason) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+        
+        if (!"已通过".equals(order.getStatus())) {
+            throw new RuntimeException("只能撤销已通过的订单");
+        }
+
+        // 释放分配的车辆
+        if (order.getBusId() != null) {
+            Bus bus = busMapper.selectById(order.getBusId());
+            if (bus != null) {
+                bus.setIsActive(true);
+                busMapper.update(bus);
+            }
+        }
+
+        // 将订单状态改为已拒绝
+        order.setStatus("已拒绝");
+        order.setRejectReason(reason);
+        order.setBusId(null);
+        orderMapper.update(order);
+    }
+
     public List<Bus> getAllBuses() {
         return busMapper.selectAll();
     }
