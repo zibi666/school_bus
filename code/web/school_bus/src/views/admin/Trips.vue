@@ -197,7 +197,7 @@ const confirmReject = async () => {
 
 <style scoped>
 .page-container {
-  padding: 8px;
+  padding: 24px;
 }
 
 .header-row {
@@ -221,11 +221,12 @@ const confirmReject = async () => {
 }
 
 .table-wrapper {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.8) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 .glass-table {
@@ -236,12 +237,15 @@ const confirmReject = async () => {
 
 .glass-table th {
   text-align: left;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #f8fafc;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+  color: #e0e7ff;
   font-weight: 700;
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-table td {
@@ -255,7 +259,7 @@ const confirmReject = async () => {
 }
 
 .glass-table tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(34, 211, 238, 0.08);
 }
 
 .font-mono {

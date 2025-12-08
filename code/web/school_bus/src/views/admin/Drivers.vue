@@ -136,7 +136,7 @@ const deleteBus = async (id) => {
 
 <style scoped>
 .page-container {
-  padding: 8px;
+  padding: 24px;
 }
 
 .header-row {
@@ -158,50 +158,83 @@ const deleteBus = async (id) => {
 }
 
 .subhead {
-  color: var(--text-secondary);
+  color: #94a3b8;
   margin: 0;
+  font-size: 15px;
 }
 
 .btn-primary-admin {
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 28px;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
-  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary-admin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
 }
 
 .btn-primary-admin:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(244, 63, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary-admin:hover::before {
+  left: 100%;
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
 }
 
 .bus-card {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 20px;
-  transition: all 0.2s;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.bus-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244, 63, 94, 0.3), transparent);
+  pointer-events: none;
 }
 
 .bus-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(244, 63, 94, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-6px);
+  border-color: rgba(244, 63, 94, 0.4);
+  box-shadow: 0 16px 40px rgba(244, 63, 94, 0.2);
 }
 
 .card-top {
@@ -212,14 +245,15 @@ const deleteBus = async (id) => {
 }
 
 .bus-icon-box {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(225, 29, 72, 0.05) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .status-badge {
@@ -250,43 +284,60 @@ const deleteBus = async (id) => {
 }
 
 .plate-number {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   color: #f8fafc;
-  font-size: 20px;
-  letter-spacing: 0.5px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-row:last-of-type {
+  border-bottom: none;
 }
 
 .label {
-  color: var(--text-secondary);
+  color: #f8fafc;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
 }
 
 .value {
-  color: #e2e8f0;
+  color: #f8fafc;
+  font-weight: 500;
 }
 
 .btn-delete-ghost {
   width: 100%;
   margin-top: 16px;
-  padding: 8px;
+  padding: 10px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
-  border-radius: 8px;
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
 }
 
 .btn-delete-ghost:hover {
-  border-color: #ef4444;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  transform: translateY(-2px);
 }
 
 /* Modal Styles */
@@ -305,13 +356,13 @@ const deleteBus = async (id) => {
 }
 
 .glass-modal {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.15);
   border-radius: 20px;
-  padding: 24px;
+  padding: 28px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(244, 63, 94, 0.1);
 }
 
 .modal-header {
@@ -324,6 +375,13 @@ const deleteBus = async (id) => {
 .modal-header h3 {
   margin: 0;
   color: #f8fafc;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .close-btn {
@@ -332,6 +390,18 @@ const deleteBus = async (id) => {
   color: #94a3b8;
   font-size: 24px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.close-btn:hover {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
 }
 
 .modal-form {
@@ -347,22 +417,40 @@ const deleteBus = async (id) => {
 }
 
 .form-group label {
-  color: #cbd5e1;
-  font-size: 14px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(244, 63, 94, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
   color: #f8fafc;
   outline: none;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .glass-input:focus {
   border-color: #f43f5e;
-  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.1);
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+select.glass-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+  padding-right: 40px;
 }
 
 .modal-actions {
@@ -374,14 +462,19 @@ const deleteBus = async (id) => {
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   color: #cbd5e1;
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #f8fafc;
 }
 </style>

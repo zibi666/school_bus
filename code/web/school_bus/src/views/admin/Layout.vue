@@ -61,9 +61,9 @@ const logout = () => {
 
 .sidebar {
   width: 260px;
-  background: rgba(15, 23, 42, 0.6);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.75) 100%);
   backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(244, 63, 94, 0.1);
   display: flex;
   flex-direction: column;
   z-index: 10;
@@ -138,12 +138,23 @@ const logout = () => {
 }
 
 .user-profile {
-  padding: 20px;
+  padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(225, 29, 72, 0.15) 100%);
+  border-radius: 12px;
+  margin: 12px;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  transition: all 0.3s ease;
+}
+
+.user-profile:hover {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.25) 0%, rgba(225, 29, 72, 0.2) 100%);
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.3);
+  transform: translateY(-2px);
 }
 
 .user-info {
@@ -153,33 +164,44 @@ const logout = () => {
 
 .user-name {
   color: #f8fafc;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .user-role {
-  color: #64748b;
+  color: #f43f5e;
   font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 .logout-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent;
-  color: #94a3b8;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(244, 63, 94, 0.2);
   color: #f43f5e;
-  border-color: rgba(244, 63, 94, 0.3);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+  transform: scale(1.05);
+}
+
+.logout-btn:active {
+  transform: scale(0.98);
 }
 
 .main-content {
