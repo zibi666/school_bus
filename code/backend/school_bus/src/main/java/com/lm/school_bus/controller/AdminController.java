@@ -68,4 +68,24 @@ public class AdminController {
         adminService.deleteBus(busId);
         return ApiResponse.success("删除成功", null);
     }
+
+    @PostMapping("/bus/availability")
+    public ApiResponse<Map<String, Object>> checkBusAvailability(@RequestBody Map<String, String> params) {
+        Integer busId = Integer.parseInt(params.get("busId"));
+        String startTimeStr = params.get("startTime");
+        String endTimeStr = params.get("endTime");
+        
+        java.time.LocalDateTime startTime = java.time.LocalDateTime.parse(startTimeStr);
+        java.time.LocalDateTime endTime = java.time.LocalDateTime.parse(endTimeStr);
+        
+        boolean isAvailable = adminService.checkBusAvailability(busId, startTime, endTime);
+        
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("busId", busId);
+        result.put("isAvailable", isAvailable);
+        result.put("startTime", startTimeStr);
+        result.put("endTime", endTimeStr);
+        
+        return ApiResponse.success("查询成功", result);
+    }
 }
