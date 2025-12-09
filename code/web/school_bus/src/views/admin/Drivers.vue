@@ -32,6 +32,10 @@
             <span class="label">司机</span>
             <span class="value">{{ bus.driverName }}</span>
           </p>
+          <p class="info-row">
+            <span class="label">单价</span>
+            <span class="value">¥{{ bus.price }}/小时</span>
+          </p>
         </div>
 
         <button class="btn-delete-ghost" @click="deleteBus(bus.busId)">
@@ -49,12 +53,12 @@
         </div>
         <form @submit.prevent="addBus" class="modal-form">
           <div class="form-group">
-            <label>车牌号</label>
-            <input v-model="form.plateNumber" required placeholder="例如：京A·88888" class="glass-input">
+            <label for="plateNumber">车牌号</label>
+            <input id="plateNumber" v-model="form.plateNumber" required placeholder="例如：京A·88888" class="glass-input">
           </div>
           <div class="form-group">
-            <label>车型</label>
-            <select v-model="form.carType" required class="glass-input">
+            <label for="carType">车型</label>
+            <select id="carType" v-model="form.carType" required class="glass-input">
               <option value="" disabled>请选择车型</option>
               <option>大巴 (45座)</option>
               <option>中巴 (20座)</option>
@@ -62,8 +66,12 @@
             </select>
           </div>
           <div class="form-group">
-            <label>司机姓名</label>
-            <input v-model="form.driverName" required placeholder="请输入司机姓名" class="glass-input">
+            <label for="driverName">司机姓名</label>
+            <input id="driverName" v-model="form.driverName" required placeholder="请输入司机姓名" class="glass-input">
+          </div>
+          <div class="form-group">
+            <label for="price">每小时单价（元）</label>
+            <input id="price" v-model.number="form.price" type="number" min="0" required placeholder="请输入整数单价" class="glass-input">
           </div>
           <div class="modal-actions">
             <button type="button" class="btn-ghost" @click="showAddModal = false">取消</button>
@@ -81,7 +89,7 @@ import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi } from '../
 
 const buses = ref([])
 const showAddModal = ref(false)
-const form = reactive({ plateNumber: '', carType: '', driverName: '' })
+const form = reactive({ plateNumber: '', carType: '', driverName: '', price: '' })
 
 const fetchBuses = async () => {
     try {
@@ -101,14 +109,16 @@ onMounted(() => {
 const addBus = async () => {
     try {
         const res = await addBusApi({
-            ...form,
-            isActive: true
+          ...form,
+          price: Number(form.price),
+          isActive: true
         })
         if (res.code === 200) {
             showAddModal.value = false
             form.plateNumber = ''
             form.carType = ''
             form.driverName = ''
+          form.price = ''
             fetchBuses()
         } else {
             alert(res.message || '添加失败')

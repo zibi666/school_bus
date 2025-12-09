@@ -121,17 +121,69 @@
         </div>
       </div>
     </div>
+
+    <!-- 支付弹窗 -->
+    <div v-if="showPaymentModal" class="payment-modal" @click.self="cancelPayment">
+      <div class="payment-content">
+        <div class="payment-header">
+          <h3>确认支付</h3>
+          <button type="button" class="close-btn" @click="cancelPayment">×</button>
+        </div>
+        
+        <div class="payment-body">
+          <div class="payment-info">
+            <div class="info-row">
+              <span class="label">目的地</span>
+              <span class="value">{{ form.destination }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">用车时间</span>
+              <span class="value">{{ form.usageTime }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">车型</span>
+              <span class="value">{{ form.requestedCarType }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">用车时长</span>
+              <span class="value">{{ priceInfo.formattedHours }}</span>
+            </div>
+            <div class="info-row price-row">
+              <span class="label">应付金额</span>
+              <span class="price-value">¥{{ priceInfo.price }}</span>
+            </div>
+          </div>
+          
+          <div class="payment-notice">
+            <p>⚠️ 支付成功后，订单将提交至管理员审核</p>
+            <p>💡 审核通过后可在"我的订单"查看车辆信息</p>
+          </div>
+        </div>
+        
+        <div class="payment-footer">
+          <button type="button" class="btn-cancel-pay" @click="cancelPayment">取消支付</button>
+          <button type="button" class="btn-pay" @click="handlePayment">确认支付</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { createOrder } from '../../api' 
+import { createOrder, calculateOrderPrice, payOrder } from '../../api' 
 
 const router = useRouter()
 const loading = ref(false)
 const showTimePicker = ref(false)
+const showPaymentModal = ref(false)
+const currentOrderId = ref(null)
+const priceInfo = reactive({
+  price: 0,
+  hours: 0,
+  formattedHours: ''
+})
 const timePickerData = reactive({
   date: '',
   startTime: '',
@@ -186,6 +238,22 @@ const submitOrder = async () => {
         return
     }
 
+    // 先计算价格
+    const priceRes = await calculateOrderPrice({
+      usageTime: form.usageTime,
+      requestedCarType: form.requestedCarType
+    })
+    
+    if (priceRes.code !== 200) {
+      alert(priceRes.message || '价格计算失败')
+      return
+    }
+    
+    // 保存价格信息
+    priceInfo.price = priceRes.data.price
+    priceInfo.hours = priceRes.data.hours
+    priceInfo.formattedHours = priceRes.data.formattedHours
+
     // 构建ISO格式的时间戳发送给后端
     const startDateTime = `${timePickerData.date}T${timePickerData.startTime}:00`
     const endDateTime = `${timePickerData.date}T${timePickerData.endTime}:00`
@@ -200,8 +268,9 @@ const submitOrder = async () => {
     })
     
     if (res.code === 200) {
-        alert('申请提交成功！请等待管理员审核。')
-        router.push('/student/trips')
+        // 保存订单ID并显示支付弹窗
+        currentOrderId.value = res.data.orderId
+        showPaymentModal.value = true
     } else {
         alert(res.message || '提交失败')
     }
@@ -211,6 +280,30 @@ const submitOrder = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handlePayment = async () => {
+  if (!currentOrderId.value) return
+  
+  try {
+    const res = await payOrder(currentOrderId.value)
+    if (res.code === 200) {
+      alert('支付成功！订单已提交，请等待管理员审核。')
+      showPaymentModal.value = false
+      router.push('/student/trips')
+    } else {
+      alert(res.message || '支付失败')
+    }
+  } catch (e) {
+    console.error(e)
+    alert('支付异常')
+  }
+}
+
+const cancelPayment = () => {
+  showPaymentModal.value = false
+  alert('已取消支付')
+  router.push('/student/trips')
 }
 </script>
 
@@ -725,6 +818,184 @@ const submitOrder = async () => {
   background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+}
+
+/* 支付弹窗样式 */
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.payment-content {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.payment-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.payment-header .close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+.payment-body {
+  padding: 24px;
+}
+
+.payment-info {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.info-row .value {
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.price-row {
+  padding-top: 16px;
+  margin-top: 8px;
+  border-top: 2px solid rgba(34, 211, 238, 0.3) !important;
+}
+
+.price-value {
+  color: #22d3ee;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.payment-notice {
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.payment-notice p {
+  margin: 0 0 8px 0;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.payment-notice p:last-child {
+  margin-bottom: 0;
+}
+
+.payment-footer {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-cancel-pay,
+.btn-pay {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-pay {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.btn-cancel-pay:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-pay {
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.4);
+}
+
+.btn-pay:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 211, 238, 0.5);
 }
 
 .btn-confirm:hover {

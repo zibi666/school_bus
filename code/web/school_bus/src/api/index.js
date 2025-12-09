@@ -29,6 +29,8 @@ export const createOrder = (data) => api.post('/student/order', data)
 export const getMyOrders = (studentId) => api.get(`/student/orders/${studentId}`)
 export const cancelOrder = (orderId) => api.post(`/student/order/cancel/${orderId}`)
 export const getBus = (busId) => api.get(`/student/bus/${busId}`)
+export const calculateOrderPrice = (data) => api.post('/student/order/calculate-price', data)
+export const payOrder = (orderId) => api.post(`/student/order/pay/${orderId}`)
 
 // Admin
 export const getAllOrders = () => api.get('/admin/orders')

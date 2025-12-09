@@ -60,4 +60,32 @@ public class StudentController {
         studentService.updateProfile(studentId, student);
         return ApiResponse.success("更新成功", null);
     }
+    
+    /**
+     * 计算订单价格
+     */
+    @PostMapping("/order/calculate-price")
+    public ApiResponse<Map<String, Object>> calculatePrice(@RequestBody Map<String, String> params) {
+        String usageTime = params.get("usageTime");
+        String requestedCarType = params.get("requestedCarType");
+        
+        java.math.BigDecimal price = studentService.calculateOrderPrice(usageTime, requestedCarType);
+        double hours = com.lm.school_bus.util.PriceCalculator.calculateHours(usageTime);
+        
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("price", price);
+        result.put("hours", hours);
+        result.put("formattedHours", com.lm.school_bus.util.PriceCalculator.formatHours(hours));
+        
+        return ApiResponse.success("计算成功", result);
+    }
+    
+    /**
+     * 支付订单
+     */
+    @PostMapping("/order/pay/{orderId}")
+    public ApiResponse<Void> payOrder(@PathVariable Integer orderId) {
+        studentService.payOrder(orderId);
+        return ApiResponse.success("支付成功", null);
+    }
 }

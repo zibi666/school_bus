@@ -12,4 +12,5 @@ public interface BusMapper {
     int update(Bus bus);
     int deleteById(Integer busId);
     Bus selectByPlateNumber(String plateNumber);
+    List<Bus> selectByCarType(String carType);
 }

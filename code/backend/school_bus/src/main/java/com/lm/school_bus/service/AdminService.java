@@ -101,6 +101,13 @@ public class AdminService {
         if (existingBus != null) {
             throw new BusinessException(400, "该车牌号已存在，请勿添加重复车牌号");
         }
+        if (bus.getPrice() == null || bus.getPrice() <= 0) {
+            throw new BusinessException(400, "请填写有效的单价");
+        }
+        // 默认空闲
+        if (bus.getIsActive() == null) {
+            bus.setIsActive(true);
+        }
         busMapper.insert(bus);
         return bus;
     }
