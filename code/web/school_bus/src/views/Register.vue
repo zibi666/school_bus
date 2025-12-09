@@ -29,7 +29,7 @@
             </div>
             <div class="feature-item">
               <span class="check-icon">✓</span>
-              <span>移动端完美适配</span>
+              <span>web端完美适配</span>
             </div>
             <div class="feature-item">
               <span class="check-icon">✓</span>
