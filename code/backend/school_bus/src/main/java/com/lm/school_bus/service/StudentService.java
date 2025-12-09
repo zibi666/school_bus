@@ -3,6 +3,7 @@ package com.lm.school_bus.service;
 import com.lm.school_bus.entity.Bus;
 import com.lm.school_bus.entity.Order;
 import com.lm.school_bus.entity.Student;
+import com.lm.school_bus.exception.BusinessException;
 import com.lm.school_bus.mapper.BusMapper;
 import com.lm.school_bus.mapper.OrderMapper;
 import com.lm.school_bus.mapper.StudentMapper;
@@ -49,12 +50,13 @@ public class StudentService {
         // 根据车型查询一个车辆的价格
         List<Bus> buses = busMapper.selectByCarType(requestedCarType);
         if (buses == null || buses.isEmpty()) {
-            throw new RuntimeException("未找到对应车型");
+            // 如果未找到对应车型，提示管理员需要添加车辆
+            throw new BusinessException(400, "系统中暂无【" + requestedCarType + "】车型的车辆，请联系管理员添加");
         }
         
         Bus bus = buses.get(0);
         if (bus.getPrice() == null || bus.getPrice() <= 0) {
-            throw new RuntimeException("车辆价格未设置");
+            throw new BusinessException(400, "车辆价格未设置，请联系管理员");
         }
         
         return PriceCalculator.calculatePrice(usageTime, bus.getPrice());
@@ -66,11 +68,11 @@ public class StudentService {
     public void payOrder(Integer orderId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(400, "订单不存在");
         }
         
         if (!"审核中".equals(order.getStatus())) {
-            throw new RuntimeException("订单状态不正确");
+            throw new BusinessException(400, "订单状态不正确");
         }
         
         // 这里可以添加实际的支付逻辑
@@ -85,11 +87,11 @@ public class StudentService {
     public void cancelOrder(Integer orderId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(400, "订单不存在");
         }
         
         if (!"审核中".equals(order.getStatus())) {
-            throw new RuntimeException("只能取消审核中的订单");
+            throw new BusinessException(400, "只能取消审核中的订单");
         }
         // 物理删除
         orderMapper.deleteById(orderId);
@@ -98,7 +100,7 @@ public class StudentService {
     public Student getProfile(String studentId) {
         Student student = studentMapper.selectById(studentId);
         if (student == null) {
-            throw new RuntimeException("学生不存在");
+            throw new BusinessException(400, "学生不存在");
         }
         return student;
     }
@@ -110,7 +112,7 @@ public class StudentService {
     public void updateProfile(String studentId, Student student) {
         Student existing = studentMapper.selectById(studentId);
         if (existing == null) {
-            throw new RuntimeException("学生不存在");
+            throw new BusinessException(400, "学生不存在");
         }
         
         student.setStudentId(studentId);

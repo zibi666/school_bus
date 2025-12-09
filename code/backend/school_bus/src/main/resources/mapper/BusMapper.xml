@@ -45,7 +45,7 @@
     </select>
 
     <select id="selectByCarType" resultMap="BaseResultMap">
-        SELECT * FROM t_bus WHERE car_type = #{carType} AND is_active = 1
+        SELECT * FROM t_bus WHERE car_type LIKE CONCAT('%', #{carType}, '%') AND is_active = 1
     </select>
 
 </mapper>

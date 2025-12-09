@@ -84,9 +84,9 @@
             <label for="carType">需求车型</label>
             <select id="carType" v-model="form.requestedCarType" required:class="{ 'is-empty': form.requestedCarType === '' }">
               <option value="" disabled>请选择车型</option>
-              <option>大巴 (45座)</option>
-              <option>中巴 (20座)</option>
-              <option>商务车 (7座)</option>
+              <option value="大巴">大巴 (45座)</option>
+              <option value="中巴">中巴 (20座)</option>
+              <option value="商务车">商务车 (7座)</option>
             </select>
           </div>
 
@@ -276,7 +276,12 @@ const submitOrder = async () => {
     }
   } catch (e) {
     console.error(e)
-    alert('提交异常')
+    // 显示后端返回的具体错误信息，而不是通用的"提交异常"
+    if (e && e.message) {
+      alert(e.message)
+    } else {
+      alert('提交异常')
+    }
   } finally {
     loading.value = false
   }
@@ -296,7 +301,11 @@ const handlePayment = async () => {
     }
   } catch (e) {
     console.error(e)
-    alert('支付异常')
+    if (e && e.message) {
+      alert(e.message)
+    } else {
+      alert('支付异常')
+    }
   }
 }
 

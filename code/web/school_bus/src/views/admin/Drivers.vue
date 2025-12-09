@@ -60,9 +60,9 @@
             <label for="carType">车型</label>
             <select id="carType" v-model="form.carType" required class="glass-input">
               <option value="" disabled>请选择车型</option>
-              <option>大巴 (45座)</option>
-              <option>中巴 (20座)</option>
-              <option>商务车 (7座)</option>
+              <option value="大巴">大巴 (45座)</option>
+              <option value="中巴">中巴 (20座)</option>
+              <option value="商务车">商务车 (7座)</option>
             </select>
           </div>
           <div class="form-group">
@@ -118,14 +118,16 @@ const addBus = async () => {
             form.plateNumber = ''
             form.carType = ''
             form.driverName = ''
-          form.price = ''
+            form.price = ''
             fetchBuses()
         } else {
+            // 显示后端返回的具体错误信息
             alert(res.message || '添加失败')
         }
     } catch (e) {
-        // 错误响应包含 code 和 message
-        if (e.message) {
+        // catch块中捕获的是axios拦截器返回的错误对象 {code, message, data}
+        console.error('Add bus error:', e)
+        if (e && e.message) {
             alert(e.message)
         } else {
             alert('添加失败')
@@ -140,10 +142,15 @@ const deleteBus = async (id) => {
             if (res.code === 200) {
                 fetchBuses()
             } else {
-                alert(res.message)
+                alert(res.message || '删除失败')
             }
         } catch (e) {
-            alert('删除失败')
+            console.error('Delete bus error:', e)
+            if (e && e.message) {
+                alert(e.message)
+            } else {
+                alert('删除失败')
+            }
         }
     }
 }
