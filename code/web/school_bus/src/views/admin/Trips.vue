@@ -148,6 +148,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { getAllOrders, getAllBuses, approveOrder, rejectOrder, revokeOrder } from '../../api'
 
 const orders = ref([])
+const allBuses = ref([])
 const availableBuses = ref([])
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
@@ -167,7 +168,7 @@ const fetchData = async () => {
         
         const busRes = await getAllBuses()
         if (busRes.code === 200) {
-            availableBuses.value = busRes.data.filter(b => b.isActive)
+            allBuses.value = busRes.data
         }
     } catch (e) {
         console.error(e)
@@ -187,6 +188,13 @@ const statusClass = (status) => {
 const openApprove = (order) => {
     currentOrder.value = order
     approveForm.busId = ''
+    
+    // 筛选与订单车型匹配的所有车辆
+    availableBuses.value = allBuses.value.filter(bus => {
+        // 检查车型是否匹配（使用模糊匹配，因为数据库中可能是 "大巴 (45座)" 这样的格式）
+        return bus.carType.includes(order.requestedCarType) || order.requestedCarType.includes(bus.carType)
+    })
+    
     showApproveModal.value = true
 }
 

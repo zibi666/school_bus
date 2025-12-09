@@ -10,12 +10,14 @@ public class Order {
     private String studentId;
     private String destination;
     private String usageTime;
+    private LocalDateTime startTime;  // 使用开始时间（用于时间冲突检查）
+    private LocalDateTime endTime;    // 使用结束时间（用于时间冲突检查）
     private String requestedCarType;
     private Integer busId;
     private BigDecimal price;
     private String status = "审核中"; // 审核中/已通过/已拒绝
     private String rejectReason;
-    private LocalDateTime createTime;
+    private Boolean isPaid = false;  // 是否已支付
     
     // Transient fields for easier frontend display if needed
     private Bus bus;

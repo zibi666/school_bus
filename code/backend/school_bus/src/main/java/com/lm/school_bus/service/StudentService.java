@@ -72,12 +72,20 @@ public class StudentService {
         }
         
         if (!"审核中".equals(order.getStatus())) {
-            throw new BusinessException(400, "订单状态不正确");
+            throw new BusinessException(400, "订单状态不正确，只能支付审核中的订单");
         }
         
-        // 这里可以添加实际的支付逻辑
-        // 暂时只是标记为已支付（可以添加一个isPaid字段）
-        // 订单创建后默认就是待审核状态，支付成功后保持审核中状态
+        if (order.getIsPaid()) {
+            throw new BusinessException(400, "订单已支付");
+        }
+        
+        if (order.getPrice() == null || order.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(400, "订单费用无效");
+        }
+        
+        // 标记为已支付
+        order.setIsPaid(true);
+        orderMapper.update(order);
     }
 
     public List<Order> getMyOrders(String studentId) {
@@ -94,6 +102,19 @@ public class StudentService {
             throw new BusinessException(400, "只能取消审核中的订单");
         }
         // 物理删除
+        orderMapper.deleteById(orderId);
+    }
+
+    public void deleteRejectedOrder(Integer orderId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(400, "订单不存在");
+        }
+        
+        if (!"已拒绝".equals(order.getStatus())) {
+            throw new BusinessException(400, "只能删除已拒绝的订单");
+        }
+        // 物理删除已拒绝的订单
         orderMapper.deleteById(orderId);
     }
 

@@ -33,6 +33,24 @@ public class StudentController {
         order.setUsageTime(params.get("usageTime"));
         order.setRequestedCarType(params.get("requestedCarType"));
         
+        // 接收前端计算好的价格
+        String priceStr = params.get("price");
+        if (priceStr != null) {
+            try {
+                order.setPrice(new java.math.BigDecimal(priceStr));
+            } catch (Exception e) {
+                return ApiResponse.error(400, "价格格式错误");
+            }
+        }
+        
+        // 解析前端传递的开始和结束时间（用于时间冲突检查）
+        String startTimeStr = params.get("startTime");
+        String endTimeStr = params.get("endTime");
+        if (startTimeStr != null && endTimeStr != null) {
+            order.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+            order.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
+        }
+        
         Order createdOrder = studentService.createOrder(order);
         return ApiResponse.success("预约成功", createdOrder);
     }
@@ -47,6 +65,12 @@ public class StudentController {
     public ApiResponse<Void> cancelOrder(@PathVariable Integer orderId) {
         studentService.cancelOrder(orderId);
         return ApiResponse.success("取消成功", null);
+    }
+
+    @DeleteMapping("/order/{orderId}")
+    public ApiResponse<Void> deleteRejectedOrder(@PathVariable Integer orderId) {
+        studentService.deleteRejectedOrder(orderId);
+        return ApiResponse.success("删除成功", null);
     }
 
     @GetMapping("/bus/{busId}")

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -31,32 +32,32 @@ public class AdminService {
     public void approveOrder(Integer orderId, Integer busId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(404, "订单不存在");
         }
         
         Bus bus = busMapper.selectById(busId);
         if (bus == null) {
-            throw new RuntimeException("车辆不存在");
+            throw new BusinessException(404, "车辆不存在");
         }
 
-        if (!bus.getIsActive()) {
-            throw new RuntimeException("该车辆正在使用中，无法分配");
+        // 检查车辆在该时间段内是否有时间冲突
+        if (order.getStartTime() != null && order.getEndTime() != null) {
+            int conflictCount = orderMapper.checkTimeConflict(busId, order.getStartTime(), order.getEndTime());
+            if (conflictCount > 0) {
+                throw new BusinessException(400, "该车辆在该时间段内已被占用，请选择其他车辆或时间");
+            }
         }
 
         // 更新订单
         order.setStatus("已通过");
         order.setBusId(busId);
         orderMapper.update(order);
-
-        // 更新车辆状态
-        bus.setIsActive(false);
-        busMapper.update(bus);
     }
 
     public void rejectOrder(Integer orderId, String reason) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(404, "订单不存在");
         }
         
         order.setStatus("已拒绝");
@@ -68,23 +69,14 @@ public class AdminService {
     public void revokeOrder(Integer orderId, String reason) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(404, "订单不存在");
         }
         
         if (!"已通过".equals(order.getStatus())) {
-            throw new RuntimeException("只能撤销已通过的订单");
+            throw new BusinessException(400, "只能撤销已通过的订单");
         }
 
-        // 释放分配的车辆
-        if (order.getBusId() != null) {
-            Bus bus = busMapper.selectById(order.getBusId());
-            if (bus != null) {
-                bus.setIsActive(true);
-                busMapper.update(bus);
-            }
-        }
-
-        // 将订单状态改为已拒绝
+        // 将订单状态改为已拒绝（不再需要释放车辆状态，因为使用时间冲突检查）
         order.setStatus("已拒绝");
         order.setRejectReason(reason);
         order.setBusId(null);
@@ -128,5 +120,23 @@ public class AdminService {
         
         // 删除车辆
         busMapper.deleteById(busId);
+    }
+
+    /**
+     * 检查车辆在指定时间段是否可用
+     * @param busId 车辆ID
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return true表示可用，false表示有冲突
+     */
+    public boolean checkBusAvailability(Integer busId, LocalDateTime startTime, LocalDateTime endTime) {
+        Bus bus = busMapper.selectById(busId);
+        if (bus == null) {
+            throw new BusinessException(404, "车辆不存在");
+        }
+        
+        // 检查是否有时间冲突的已通过订单
+        int conflictCount = orderMapper.checkTimeConflict(busId, startTime, endTime);
+        return conflictCount == 0;
     }
 }

@@ -264,6 +264,7 @@ const submitOrder = async () => {
         startTime: startDateTime,
         endTime: endDateTime,
         requestedCarType: form.requestedCarType,
+        price: priceRes.data.price,
         studentId
     })
     

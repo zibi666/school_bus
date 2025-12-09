@@ -28,7 +28,7 @@
             <span class="dot"></span>
             {{ order.status }}
           </div>
-          <span class="date">{{ formatDate(order.createTime) }}</span>
+          <span class="date">{{ formatDate(order.startTime) }}</span>
         </div>
         
         <div class="card-body">
@@ -41,6 +41,16 @@
           <div class="info-row">
             <span class="label">车型</span>
             <span class="value">{{ order.requestedCarType }}</span>
+          </div>
+          <div v-if="order.price" class="info-row">
+            <span class="label">总价</span>
+            <span class="value highlight-price">¥{{ order.price }}</span>
+          </div>
+          <div v-if="order.status === '审核中'" class="info-row">
+            <span class="label">支付状态</span>
+            <span class="value" :class="order.isPaid ? 'paid' : 'unpaid'">
+              {{ order.isPaid ? '✓ 已支付' : '未支付' }}
+            </span>
           </div>
           
           <!-- Details for Approved -->
@@ -66,6 +76,12 @@
             取消申请
           </button>
         </div>
+
+        <div class="card-footer" v-if="order.status === '已拒绝'">
+          <button class="btn-danger-ghost" @click="handleDeleteOrder(order.orderId)">
+            删除订单
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -73,7 +89,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getMyOrders, cancelOrder, getBus } from '../../api'
+import { getMyOrders, cancelOrder, deleteOrder, getBus } from '../../api'
 
 const orders = ref([])
 
@@ -131,6 +147,25 @@ const handleCancelOrder = async (id) => {
         }
     } catch (e) {
         alert('取消失败')
+    }
+  }
+}
+
+const handleDeleteOrder = async (id) => {
+  if(confirm('确定要删除该已拒绝订单吗？')) {
+    try {
+        const res = await deleteOrder(id)
+        if (res.code === 200) {
+            fetchOrders()
+        } else {
+            alert(res.message)
+        }
+    } catch (e) {
+        if (e && e.message) {
+            alert(e.message)
+        } else {
+            alert('删除失败')
+        }
     }
   }
 }
@@ -318,6 +353,20 @@ const handleCancelOrder = async (id) => {
 
 .value {
   color: #ffffff;
+}
+
+.highlight-price {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.value.paid {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.value.unpaid {
+  color: #f87171;
 }
 
 .approved-box {

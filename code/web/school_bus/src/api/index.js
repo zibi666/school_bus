@@ -28,6 +28,7 @@ export const updateStudentProfile = (studentId, data) => api.put(`/student/profi
 export const createOrder = (data) => api.post('/student/order', data)
 export const getMyOrders = (studentId) => api.get(`/student/orders/${studentId}`)
 export const cancelOrder = (orderId) => api.post(`/student/order/cancel/${orderId}`)
+export const deleteOrder = (orderId) => api.delete(`/student/order/${orderId}`)
 export const getBus = (busId) => api.get(`/student/bus/${busId}`)
 export const calculateOrderPrice = (data) => api.post('/student/order/calculate-price', data)
 export const payOrder = (orderId) => api.post(`/student/order/pay/${orderId}`)
@@ -40,5 +41,6 @@ export const revokeOrder = (data) => api.post('/admin/order/revoke', data)
 export const getAllBuses = () => api.get('/admin/buses')
 export const addBus = (data) => api.post('/admin/bus', data)
 export const deleteBus = (busId) => api.delete(`/admin/bus/${busId}`)
+export const checkBusAvailability = (data) => api.post('/admin/bus/availability', data)
 
 export default api

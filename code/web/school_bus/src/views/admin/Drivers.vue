@@ -10,15 +10,50 @@
       </button>
     </div>
 
+    <!-- Time Selection Panel -->
+    <div class="time-selector-panel">
+      <div class="time-selector-content">
+        <div class="time-input-group">
+          <label>查询日期与时间</label>
+          <div class="time-inputs">
+            <input 
+              v-model="queryDate" 
+              type="date" 
+              class="glass-input"
+              @change="onTimeChange"
+            >
+            <input 
+              v-model="queryStartTime" 
+              type="time" 
+              class="glass-input"
+              @change="onTimeChange"
+            >
+            <span class="separator">-</span>
+            <input 
+              v-model="queryEndTime" 
+              type="time" 
+              class="glass-input"
+              @change="onTimeChange"
+            >
+          </div>
+        </div>
+        <div class="time-info">
+          <p v-if="selectedTimeRange" class="time-range-text">
+            📅 {{ formatTimeRange() }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="grid-container">
       <div v-for="bus in buses" :key="bus.busId" class="bus-card">
         <div class="card-top">
           <div class="bus-icon-box">
             🚌
           </div>
-          <div class="status-badge" :class="bus.isActive ? 'status-free' : 'status-busy'">
+          <div class="status-badge" :class="getBusStatusClass(bus)">
             <span class="dot"></span>
-            {{ bus.isActive ? '空闲' : '使用中' }}
+            {{ getBusStatusText(bus) }}
           </div>
         </div>
         
@@ -84,18 +119,90 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi } from '../../api'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi, checkBusAvailability } from '../../api'
 
 const buses = ref([])
 const showAddModal = ref(false)
 const form = reactive({ plateNumber: '', carType: '', driverName: '', price: '' })
+
+// 时间选择相关
+const queryDate = ref('')
+const queryStartTime = ref('00:00')
+const queryEndTime = ref('23:59')
+const busAvailabilityMap = ref({}) // 存储每个车辆的可用性
+const hasCheckedAvailability = ref(false) // 标记是否已进行过可用性检查
+
+const selectedTimeRange = computed(() => {
+  return queryDate.value && queryStartTime.value && queryEndTime.value
+})
+
+const formatTimeRange = () => {
+  if (!selectedTimeRange.value) return ''
+  const dateStr = new Date(queryDate.value).toLocaleDateString('zh-CN')
+  return `${dateStr} ${queryStartTime.value}-${queryEndTime.value}`
+}
+
+const onTimeChange = async () => {
+  if (!selectedTimeRange.value) return
+  
+  // 查询所有车辆在该时间段的可用性
+  busAvailabilityMap.value = {}
+  hasCheckedAvailability.value = false // 重置状态
+  
+  for (let bus of buses.value) {
+    try {
+      const startDateTime = `${queryDate.value}T${queryStartTime.value}:00`
+      const endDateTime = `${queryDate.value}T${queryEndTime.value}:00`
+      
+      const res = await checkBusAvailability({
+        busId: bus.busId.toString(),
+        startTime: startDateTime,
+        endTime: endDateTime
+      })
+      
+      if (res.code === 200) {
+        busAvailabilityMap.value[bus.busId] = res.data.isAvailable
+      }
+    } catch (e) {
+      console.error('检查可用性失败:', e)
+    }
+  }
+  
+  // 所有查询完成后标记为已检查
+  hasCheckedAvailability.value = true
+}
+
+const getBusStatusClass = (bus) => {
+  if (!selectedTimeRange.value || !hasCheckedAvailability.value) {
+    // 未选择时间段或未进行过检查时，显示全局状态
+    return bus.isActive ? 'status-free' : 'status-busy'
+  }
+  
+  // 已选择时间段且已检查时，显示该时间段的可用性
+  const isAvailable = busAvailabilityMap.value[bus.busId]
+  return isAvailable ? 'status-free' : 'status-busy'
+}
+
+const getBusStatusText = (bus) => {
+  if (!selectedTimeRange.value || !hasCheckedAvailability.value) {
+    return bus.isActive ? '空闲' : '使用中'
+  }
+  
+  const isAvailable = busAvailabilityMap.value[bus.busId]
+  return isAvailable ? '✓ 可用' : '✗ 已占用'
+}
 
 const fetchBuses = async () => {
     try {
         const res = await getAllBuses()
         if (res.code === 200) {
             buses.value = res.data
+            // 初始化时间为今天
+            const today = new Date().toISOString().split('T')[0]
+            queryDate.value = today
+            // 页面加载完成后自动进行一次检查
+            await onTimeChange()
         }
     } catch (e) {
         console.error(e)
@@ -298,6 +405,11 @@ const deleteBus = async (id) => {
   color: #f43f5e;
 }
 
+.status-unknown {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+}
+
 .dot {
   width: 6px;
   height: 6px;
@@ -498,5 +610,81 @@ select.glass-input {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.4);
   color: #f8fafc;
+}
+
+/* Time Selector Panel */
+.time-selector-panel {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(225, 29, 72, 0.02) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.time-selector-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.time-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-input-group label {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-inputs input {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(244, 63, 94, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #f8fafc;
+  outline: none;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.time-inputs input:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.separator {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+}
+
+.time-range-text {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 14px;
+  background: rgba(244, 63, 94, 0.1);
+  border-radius: 8px;
 }
 </style>
