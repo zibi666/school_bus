@@ -96,6 +96,15 @@
         WHERE bus_id = #{busId}
     </select>
 
+    <select id="selectByInvitationCode" resultMap="OrderWithBusResultMap">
+        SELECT 
+            o.*,
+            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.number, b.price
+        FROM t_order o
+        LEFT JOIN t_bus b ON o.bus_id = b.bus_id
+        WHERE o.invitation_code = #{invitationCode}
+    </select>
+
     <!-- 检查车辆在指定时间段内是否有已通过的订单（时间冲突检查） -->
     <select id="checkTimeConflict" resultType="int">
         SELECT COUNT(*) FROM t_order

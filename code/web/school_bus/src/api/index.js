@@ -32,6 +32,7 @@ export const deleteOrder = (orderId) => api.delete(`/student/order/${orderId}`)
 export const getBus = (busId) => api.get(`/student/bus/${busId}`)
 export const calculateOrderPrice = (data) => api.post('/student/order/calculate-price', data)
 export const payOrder = (orderId) => api.post(`/student/order/pay/${orderId}`)
+export const getOrderByInvitationCode = (invitationCode) => api.get(`/student/order/by-invitation-code/${invitationCode}`)
 
 // Admin
 export const getAllOrders = () => api.get('/admin/orders')

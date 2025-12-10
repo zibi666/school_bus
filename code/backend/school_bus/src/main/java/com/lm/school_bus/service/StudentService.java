@@ -148,4 +148,30 @@ public class StudentService {
         student.setStudentId(studentId);
         studentMapper.updateById(student);
     }
+    
+    /**
+     * 通过邀请码查询订单并返回订单详情（包含车辆信息）
+     * @param invitationCode 邀请码
+     * @return 订单对象（包含关联的车辆信息）
+     */
+    public Order getOrderByInvitationCode(String invitationCode) {
+        if (invitationCode == null || invitationCode.isEmpty()) {
+            throw new BusinessException(400, "邀请码不能为空");
+        }
+        
+        Order order = orderMapper.selectByInvitationCode(invitationCode);
+        if (order == null) {
+            throw new BusinessException(404, "邀请码不存在或已过期");
+        }
+        
+        if (!"已通过".equals(order.getStatus())) {
+            throw new BusinessException(400, "该订单尚未被批准，无法加入");
+        }
+        
+        if (order.getBusId() == null) {
+            throw new BusinessException(400, "该订单还未分配车辆");
+        }
+        
+        return order;
+    }
 }

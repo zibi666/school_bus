@@ -120,4 +120,13 @@ public class StudentController {
         studentService.payOrder(orderId);
         return ApiResponse.success("支付成功", null);
     }
+    
+    /**
+     * 通过邀请码查询订单并获取车辆信息
+     */
+    @GetMapping("/order/by-invitation-code/{invitationCode}")
+    public ApiResponse<Order> getOrderByInvitationCode(@PathVariable String invitationCode) {
+        Order order = studentService.getOrderByInvitationCode(invitationCode);
+        return ApiResponse.success("获取成功", order);
+    }
 }
