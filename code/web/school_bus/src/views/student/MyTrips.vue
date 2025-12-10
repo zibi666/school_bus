@@ -415,7 +415,7 @@ const handleDeleteOrder = async (id) => {
   color: #60a5fa;
   font-weight: 600;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 2px 0;
   border-radius: 4px;
   transition: all 0.3s ease;
 }
