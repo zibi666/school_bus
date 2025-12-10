@@ -193,6 +193,7 @@ onMounted(() => {
 const statusClass = (status) => {
   if (status === '已通过') return 'status-approved'
   if (status === '已拒绝') return 'status-rejected'
+  if (status === '已退票') return 'status-refunded'
   return 'status-pending'
 }
 
@@ -399,6 +400,7 @@ const confirmRevoke = async () => {
 
 .status-approved { background: rgba(16, 185, 129, 0.1); color: #34d399; }
 .status-rejected { background: rgba(244, 63, 94, 0.1); color: #f43f5e; }
+.status-refunded { background: rgba(139, 92, 246, 0.1); color: #d8b4fe; }
 .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
 
 .dot {
