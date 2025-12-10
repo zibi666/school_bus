@@ -38,7 +38,7 @@
           
           <div class="info-row">
             <span class="label">时间</span>
-            <span class="value">{{ order.usageTime }}</span>
+            <span class="value">{{ formatTimeRange(order.startTime, order.endTime) }}</span>
           </div>
           <div class="info-row">
             <span class="label">车型</span>
@@ -136,6 +136,26 @@ const statusClass = (status) => {
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString()
+}
+
+const formatTimeRange = (startTime, endTime) => {
+  if (!startTime || !endTime) return ''
+  
+  try {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    
+    const month = start.getMonth() + 1
+    const day = start.getDate()
+    const startHour = String(start.getHours()).padStart(2, '0')
+    const startMinute = String(start.getMinutes()).padStart(2, '0')
+    const endHour = String(end.getHours()).padStart(2, '0')
+    const endMinute = String(end.getMinutes()).padStart(2, '0')
+    
+    return `${month}月${day}日 ${startHour}:${startMinute}-${endHour}:${endMinute}`
+  } catch (e) {
+    return ''
+  }
 }
 
 const handleCancelOrder = async (id) => {

@@ -8,7 +8,6 @@
         <id column="order_id" property="orderId" />
         <result column="student_id" property="studentId" />
         <result column="destination" property="destination" />
-        <result column="usage_time" property="usageTime" />
         <result column="start_time" property="startTime" />
         <result column="end_time" property="endTime" />
         <result column="requested_car_type" property="requestedCarType" />
@@ -32,7 +31,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        order_id, student_id, destination, usage_time, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid
+        order_id, student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid
     </sql>
 
     <select id="selectByStatusOrderByCreateTimeDesc" resultMap="BaseResultMap">
@@ -55,15 +54,14 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="orderId">
-        INSERT INTO t_order (student_id, destination, usage_time, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid)
-        VALUES (#{studentId}, #{destination}, #{usageTime}, #{startTime}, #{endTime}, #{requestedCarType}, #{busId}, #{price}, #{status}, #{rejectReason}, #{isPaid})
+        INSERT INTO t_order (student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid)
+        VALUES (#{studentId}, #{destination}, #{startTime}, #{endTime}, #{requestedCarType}, #{busId}, #{price}, #{status}, #{rejectReason}, #{isPaid})
     </insert>
 
     <update id="update">
         UPDATE t_order
         SET student_id = #{studentId},
             destination = #{destination},
-            usage_time = #{usageTime},
             start_time = #{startTime},
             end_time = #{endTime},
             requested_car_type = #{requestedCarType},

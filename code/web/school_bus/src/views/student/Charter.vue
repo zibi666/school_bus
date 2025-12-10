@@ -38,7 +38,9 @@
             <label for="usage">使用时间段</label>
             <div class="time-picker-container">
               <div class="time-input" @click="showTimePicker = true">
-                <span v-if="form.usageTime" class="time-display">{{ form.usageTime }}</span>
+                <span v-if="timePickerData.date && timePickerData.startTime && timePickerData.endTime" class="time-display">
+                  {{ timePickerData.date }} {{ timePickerData.startTime }}-{{ timePickerData.endTime }}
+                </span>
                 <span v-else class="time-placeholder">请选择时间段</span>
                 <svg class="time-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -138,7 +140,7 @@
             </div>
             <div class="info-row">
               <span class="label">用车时间</span>
-              <span class="value">{{ form.usageTime }}</span>
+              <span class="value">{{ timePickerData.date }} {{ timePickerData.startTime }}-{{ timePickerData.endTime }}</span>
             </div>
             <div class="info-row">
               <span class="label">车型</span>
@@ -191,19 +193,8 @@ const timePickerData = reactive({
 })
 const form = reactive({
   destination: '',
-  usageTime: '',
   requestedCarType: ''
 })
-
-const formatDateForDisplay = (date, startTime, endTime) => {
-  if (!date || !startTime || !endTime) return ''
-  
-  const dateObj = new Date(date)
-  const month = dateObj.getMonth() + 1
-  const day = dateObj.getDate()
-  
-  return `${month}月${day}日 ${startTime}-${endTime}`
-}
 
 const confirmTimeSelection = () => {
   if (!timePickerData.date || !timePickerData.startTime || !timePickerData.endTime) {
@@ -216,13 +207,7 @@ const confirmTimeSelection = () => {
     return
   }
   
-  // 格式化用于显示
-  form.usageTime = formatDateForDisplay(
-    timePickerData.date,
-    timePickerData.startTime,
-    timePickerData.endTime
-  )
-  
+  // 直接关闭，不需要再单独存储 usageTime
   showTimePicker.value = false
 }
 
@@ -238,9 +223,14 @@ const submitOrder = async () => {
         return
     }
 
-    // 先计算价格
+    // 构建ISO格式的时间戳
+    const startDateTime = `${timePickerData.date}T${timePickerData.startTime}:00`
+    const endDateTime = `${timePickerData.date}T${timePickerData.endTime}:00`
+
+    // 先计算价格，传递实际的时间而不是文本描述
     const priceRes = await calculateOrderPrice({
-      usageTime: form.usageTime,
+      startTime: startDateTime,
+      endTime: endDateTime,
       requestedCarType: form.requestedCarType
     })
     
@@ -254,13 +244,8 @@ const submitOrder = async () => {
     priceInfo.hours = priceRes.data.hours
     priceInfo.formattedHours = priceRes.data.formattedHours
 
-    // 构建ISO格式的时间戳发送给后端
-    const startDateTime = `${timePickerData.date}T${timePickerData.startTime}:00`
-    const endDateTime = `${timePickerData.date}T${timePickerData.endTime}:00`
-
     const res = await createOrder({
         destination: form.destination,
-        usageTime: form.usageTime,
         startTime: startDateTime,
         endTime: endDateTime,
         requestedCarType: form.requestedCarType,

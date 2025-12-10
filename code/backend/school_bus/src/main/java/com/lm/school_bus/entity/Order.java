@@ -9,9 +9,8 @@ public class Order {
     private Integer orderId;
     private String studentId;
     private String destination;
-    private String usageTime;
-    private LocalDateTime startTime;  // 使用开始时间（用于时间冲突检查）
-    private LocalDateTime endTime;    // 使用结束时间（用于时间冲突检查）
+    private LocalDateTime startTime;  // 使用开始时间
+    private LocalDateTime endTime;    // 使用结束时间
     private String requestedCarType;
     private Integer busId;
     private BigDecimal price;

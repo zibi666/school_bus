@@ -30,7 +30,6 @@ public class StudentController {
         Order order = new Order();
         order.setStudentId(params.get("studentId"));
         order.setDestination(params.get("destination"));
-        order.setUsageTime(params.get("usageTime"));
         order.setRequestedCarType(params.get("requestedCarType"));
         
         // 接收前端计算好的价格
@@ -90,16 +89,25 @@ public class StudentController {
      */
     @PostMapping("/order/calculate-price")
     public ApiResponse<Map<String, Object>> calculatePrice(@RequestBody Map<String, String> params) {
-        String usageTime = params.get("usageTime");
+        String startTimeStr = params.get("startTime");
+        String endTimeStr = params.get("endTime");
         String requestedCarType = params.get("requestedCarType");
         
-        java.math.BigDecimal price = studentService.calculateOrderPrice(usageTime, requestedCarType);
-        double hours = com.lm.school_bus.util.PriceCalculator.calculateHours(usageTime);
+        if (startTimeStr == null || endTimeStr == null) {
+            return ApiResponse.error(400, "开始和结束时间不能为空");
+        }
+        
+        java.time.LocalDateTime startTime = java.time.LocalDateTime.parse(startTimeStr);
+        java.time.LocalDateTime endTime = java.time.LocalDateTime.parse(endTimeStr);
+        
+        java.math.BigDecimal price = studentService.calculateOrderPrice(startTime, endTime, requestedCarType);
+        double hours = com.lm.school_bus.util.PriceCalculator.calculateHours(startTime, endTime);
         
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("price", price);
         result.put("hours", hours);
         result.put("formattedHours", com.lm.school_bus.util.PriceCalculator.formatHours(hours));
+        result.put("timeRange", com.lm.school_bus.util.PriceCalculator.formatTimeRange(startTime, endTime));
         
         return ApiResponse.success("计算成功", result);
     }

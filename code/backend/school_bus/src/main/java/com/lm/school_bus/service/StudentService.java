@@ -30,15 +30,6 @@ public class StudentService {
         // 默认状态
         order.setStatus("审核中");
         
-        // 根据车型查询价格（如果已分配车辆）
-        if (order.getBusId() != null) {
-            Bus bus = busMapper.selectById(order.getBusId());
-            if (bus != null && bus.getPrice() != null) {
-                BigDecimal price = PriceCalculator.calculatePrice(order.getUsageTime(), bus.getPrice());
-                order.setPrice(price);
-            }
-        }
-        
         orderMapper.insert(order);
         return order;
     }
@@ -46,7 +37,7 @@ public class StudentService {
     /**
      * 计算订单价格（不保存）
      */
-    public BigDecimal calculateOrderPrice(String usageTime, String requestedCarType) {
+    public BigDecimal calculateOrderPrice(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime, String requestedCarType) {
         // 根据车型查询一个车辆的价格
         List<Bus> buses = busMapper.selectByCarType(requestedCarType);
         if (buses == null || buses.isEmpty()) {
@@ -59,7 +50,7 @@ public class StudentService {
             throw new BusinessException(400, "车辆价格未设置，请联系管理员");
         }
         
-        return PriceCalculator.calculatePrice(usageTime, bus.getPrice());
+        return PriceCalculator.calculatePrice(startTime, endTime, bus.getPrice());
     }
     
     /**

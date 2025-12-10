@@ -25,7 +25,7 @@
             <td class="font-mono">#{{ order.orderId }}</td>
             <td>{{ order.studentId }}</td>
             <td>{{ order.destination }}</td>
-            <td>{{ order.usageTime }}</td>
+            <td>{{ formatTimeRange(order.startTime, order.endTime) }}</td>
             <td><span class="car-tag">{{ order.requestedCarType }}</span></td>
             <td>
               <span :class="['status-pill', statusClass(order.status)]">
@@ -183,6 +183,26 @@ const statusClass = (status) => {
   if (status === '已通过') return 'status-approved'
   if (status === '已拒绝') return 'status-rejected'
   return 'status-pending'
+}
+
+const formatTimeRange = (startTime, endTime) => {
+  if (!startTime || !endTime) return ''
+  
+  try {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    
+    const month = start.getMonth() + 1
+    const day = start.getDate()
+    const startHour = String(start.getHours()).padStart(2, '0')
+    const startMinute = String(start.getMinutes()).padStart(2, '0')
+    const endHour = String(end.getHours()).padStart(2, '0')
+    const endMinute = String(end.getMinutes()).padStart(2, '0')
+    
+    return `${month}月${day}日 ${startHour}:${startMinute}-${endHour}:${endMinute}`
+  } catch (e) {
+    return ''
+  }
 }
 
 const openApprove = (order) => {
