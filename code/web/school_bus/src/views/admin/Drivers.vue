@@ -179,6 +179,16 @@ const getBusStatusClass = (bus) => {
     return bus.isActive ? 'status-free' : 'status-busy'
   }
   
+  // 检查日期是否已过
+  const selectedDate = new Date(queryDate.value)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  selectedDate.setHours(0, 0, 0, 0)
+  
+  if (selectedDate < today) {
+    return 'status-past'
+  }
+  
   // 已选择时间段且已检查时，显示该时间段的可用性
   const isAvailable = busAvailabilityMap.value[bus.busId]
   return isAvailable ? 'status-free' : 'status-busy'
@@ -187,6 +197,16 @@ const getBusStatusClass = (bus) => {
 const getBusStatusText = (bus) => {
   if (!selectedTimeRange.value || !hasCheckedAvailability.value) {
     return bus.isActive ? '空闲' : '使用中'
+  }
+  
+  // 检查日期是否已过
+  const selectedDate = new Date(queryDate.value)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  selectedDate.setHours(0, 0, 0, 0)
+  
+  if (selectedDate < today) {
+    return '📅 已过日期'
   }
   
   const isAvailable = busAvailabilityMap.value[bus.busId]
@@ -403,6 +423,11 @@ const deleteBus = async (id) => {
 .status-busy {
   background: rgba(244, 63, 94, 0.1);
   color: #f43f5e;
+}
+
+.status-past {
+  background: rgba(107, 114, 128, 0.1);
+  color: #9ca3af;
 }
 
 .status-unknown {
