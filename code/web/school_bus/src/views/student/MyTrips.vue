@@ -65,6 +65,10 @@
               <span class="d-label">司机</span>
               <span class="d-value">{{ order.busInfo.driverName }}</span>
             </div>
+            <div class="detail-row">
+              <span class="d-label">电话</span>
+              <span class="d-value">{{ order.busInfo.number }}</span>
+            </div>
           </div>
 
           <!-- Reason for Rejected -->

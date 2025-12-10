@@ -105,6 +105,10 @@
             <input id="driverName" v-model="form.driverName" required placeholder="请输入司机姓名" class="glass-input">
           </div>
           <div class="form-group">
+            <label for="number">司机号码</label>
+            <input id="number" v-model="form.number" required placeholder="例如：13800138000" class="glass-input">
+          </div>
+          <div class="form-group">
             <label for="price">每小时单价（元）</label>
             <input id="price" v-model.number="form.price" type="number" min="0" required placeholder="请输入整数单价" class="glass-input">
           </div>
@@ -124,7 +128,7 @@ import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi, checkBusAv
 
 const buses = ref([])
 const showAddModal = ref(false)
-const form = reactive({ plateNumber: '', carType: '', driverName: '', price: '' })
+const form = reactive({ plateNumber: '', carType: '', driverName: '', number: '', price: '' })
 
 // 时间选择相关
 const queryDate = ref('')
@@ -175,8 +179,8 @@ const onTimeChange = async () => {
 
 const getBusStatusClass = (bus) => {
   if (!selectedTimeRange.value || !hasCheckedAvailability.value) {
-    // 未选择时间段或未进行过检查时，显示全局状态
-    return bus.isActive ? 'status-free' : 'status-busy'
+    // 未选择时间段或未进行过检查时，不显示状态
+    return 'status-unknown'
   }
   
   // 检查日期是否已过
@@ -196,7 +200,7 @@ const getBusStatusClass = (bus) => {
 
 const getBusStatusText = (bus) => {
   if (!selectedTimeRange.value || !hasCheckedAvailability.value) {
-    return bus.isActive ? '空闲' : '使用中'
+    return '检查中...'
   }
   
   // 检查日期是否已过
@@ -245,6 +249,7 @@ const addBus = async () => {
             form.plateNumber = ''
             form.carType = ''
             form.driverName = ''
+            form.number = ''
             form.price = ''
             fetchBuses()
         } else {

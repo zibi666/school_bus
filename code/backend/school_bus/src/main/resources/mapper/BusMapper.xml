@@ -9,7 +9,7 @@
         <result column="plate_number" property="plateNumber" />
         <result column="car_type" property="carType" />
         <result column="driver_name" property="driverName" />
-        <result column="is_active" property="isActive" />
+        <result column="number" property="number" />
         <result column="price" property="price" />
     </resultMap>
 
@@ -22,8 +22,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="busId">
-        INSERT INTO t_bus (plate_number, car_type, driver_name, is_active, price)
-        VALUES (#{plateNumber}, #{carType}, #{driverName}, #{isActive}, #{price})
+        INSERT INTO t_bus (plate_number, car_type, driver_name, number, price)
+        VALUES (#{plateNumber}, #{carType}, #{driverName}, #{number}, #{price})
     </insert>
 
     <update id="update">
@@ -31,7 +31,7 @@
         SET plate_number = #{plateNumber},
             car_type = #{carType},
             driver_name = #{driverName},
-            is_active = #{isActive},
+            number = #{number},
             price = #{price}
         WHERE bus_id = #{busId}
     </update>

@@ -26,7 +26,8 @@
             <result column="plate_number" property="plateNumber"/>
             <result column="car_type" property="carType"/>
             <result column="driver_name" property="driverName"/>
-            <result column="is_active" property="isActive"/>
+            <result column="number" property="number"/>
+            <result column="price" property="price"/>
         </association>
     </resultMap>
 
@@ -80,7 +81,7 @@
     <select id="selectByStudentIdOrderByCreateTimeDesc" resultMap="OrderWithBusResultMap">
         SELECT 
             o.*,
-            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.is_active
+            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.number, b.price
         FROM t_order o
         LEFT JOIN t_bus b ON o.bus_id = b.bus_id
         WHERE o.student_id = #{studentId}
