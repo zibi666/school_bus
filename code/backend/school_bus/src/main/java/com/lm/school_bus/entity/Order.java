@@ -17,6 +17,7 @@ public class Order {
     private String status = "审核中"; // 审核中/已通过/已拒绝
     private String rejectReason;
     private Boolean isPaid = false;  // 是否已支付
+    private String invitationCode;  // 邀请码
     
     // Transient fields for easier frontend display if needed
     private Bus bus;

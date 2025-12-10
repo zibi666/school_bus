@@ -48,6 +48,12 @@
             <span class="label">总价</span>
             <span class="value highlight-price">¥{{ order.price }}</span>
           </div>
+          <div v-if="order.invitationCode" class="info-row">
+            <span class="label">邀请码</span>
+            <span class="value invitation-code" @click="copyInvitationCode(order.invitationCode)">
+              {{ order.invitationCode }} 📋
+            </span>
+          </div>
           <div v-if="order.status === '审核中'" class="info-row">
             <span class="label">支付状态</span>
             <span class="value" :class="order.isPaid ? 'paid' : 'unpaid'">
@@ -160,6 +166,14 @@ const formatTimeRange = (startTime, endTime) => {
   } catch (e) {
     return ''
   }
+}
+
+const copyInvitationCode = (code) => {
+  navigator.clipboard.writeText(code).then(() => {
+    alert('邀请码已复制到剪贴板')
+  }).catch(() => {
+    alert('复制失败，请手动复制')
+  })
 }
 
 const handleCancelOrder = async (id) => {
@@ -393,6 +407,20 @@ const handleDeleteOrder = async (id) => {
 
 .value.unpaid {
   color: #f87171;
+}
+
+.invitation-code {
+  color: #60a5fa;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.invitation-code:hover {
+  background: rgba(96, 165, 250, 0.1);
+  color: #93c5fd;
 }
 
 .approved-box {

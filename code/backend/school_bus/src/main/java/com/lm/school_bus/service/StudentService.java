@@ -30,8 +30,26 @@ public class StudentService {
         // 默认状态
         order.setStatus("审核中");
         
+        // 生成邀请码（8位随机码）
+        String invitationCode = generateInvitationCode();
+        order.setInvitationCode(invitationCode);
+        
         orderMapper.insert(order);
         return order;
+    }
+    
+    /**
+     * 生成邀请码：6位数字+2位字母的组合
+     * 例如：ABC123DE
+     */
+    private String generateInvitationCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code = new StringBuilder();
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 8; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return code.toString();
     }
     
     /**
