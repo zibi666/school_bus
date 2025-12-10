@@ -81,7 +81,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
-import { getOrderByInvitationCode } from '../../api'
+import { getOrderByInvitationCode, joinOrderByInvitationCode } from '../../api'
 
 const router = useRouter()
 const showJoinModal = ref(false)
@@ -106,15 +106,21 @@ const handleJoinOrder = async () => {
   joinLoading.value = true
   
   try {
-    const res = await getOrderByInvitationCode(invitationCodeInput.value)
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    if (!userInfo.studentId) {
+      joinError.value = '请先登录'
+      return
+    }
+    
+    const res = await joinOrderByInvitationCode(invitationCodeInput.value, userInfo.studentId)
     if (res.code === 200) {
       joinSuccess.value = `✓ 成功！订单已添加到您的订单列表`
       // 清空输入
       invitationCodeInput.value = ''
-      // 1秒后关闭弹窗并跳转到我的订单
+      // 1秒后关闭弹窗并跳转到我的订单，加上 refresh 参数强制刷新
       setTimeout(() => {
         showJoinModal.value = false
-        router.push('/student/trips')
+        router.push('/student/trips?refresh=' + Date.now())
       }, 1000)
     } else {
       joinError.value = res.message || '加入失败'

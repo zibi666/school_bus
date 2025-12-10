@@ -48,7 +48,7 @@
             <span class="label">总价</span>
             <span class="value highlight-price">¥{{ order.price }}</span>
           </div>
-          <div v-if="order.invitationCode" class="info-row">
+          <div v-if="order.invitationCode && order.isApplicant" class="info-row">
             <span class="label">邀请码</span>
             <span class="value invitation-code" @click="copyInvitationCode(order.invitationCode)">
               {{ order.invitationCode }}
@@ -89,10 +89,20 @@
           </button>
         </div>
 
+        <div class="card-footer" v-if="order.status === '已通过' && order.isApplicant">
+          <button class="btn-danger-ghost" @click="handleRefundOrder(order.orderId)">
+            申请退票
+          </button>
+        </div>
+
         <div class="card-footer" v-if="order.status === '已拒绝'">
           <button class="btn-danger-ghost" @click="handleDeleteOrder(order.orderId)">
             删除订单
           </button>
+        </div>
+
+        <div class="card-footer" v-if="order.status === '已退票'">
+          <p class="refund-status">✓ 已退票</p>
         </div>
       </div>
     </div>
@@ -100,9 +110,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getMyOrders, cancelOrder, deleteOrder, getBus } from '../../api'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder } from '../../api'
 
+const route = useRoute()
 const orders = ref([])
 
 const fetchOrders = async () => {
@@ -137,9 +149,17 @@ onMounted(() => {
   fetchOrders()
 })
 
+// 监听路由查询参数，如果有 refresh 参数则重新加载订单
+watch(() => route.query.refresh, (newVal) => {
+  if (newVal) {
+    fetchOrders()
+  }
+})
+
 const statusClass = (status) => {
   if (status === '已通过') return 'status-approved'
   if (status === '已拒绝') return 'status-rejected'
+  if (status === '已退票') return 'status-refunded'
   return 'status-pending'
 }
 
@@ -205,6 +225,27 @@ const handleDeleteOrder = async (id) => {
             alert(e.message)
         } else {
             alert('删除失败')
+        }
+    }
+  }
+}
+
+const handleRefundOrder = async (id) => {
+  if(confirm('确定要申请退票吗？此操作将退掉该邀请码下所有学生的订单')) {
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+        const res = await refundOrder(id, userInfo.studentId)
+        if (res.code === 200) {
+            alert('退票成功')
+            fetchOrders()
+        } else {
+            alert(res.message || '退票失败')
+        }
+    } catch (e) {
+        if (e && e.message) {
+            alert(e.message)
+        } else {
+            alert('退票失败')
         }
     }
   }
@@ -335,6 +376,9 @@ const handleDeleteOrder = async (id) => {
 .status-rejected {
   border-left: 4px solid #ef4444;
 }
+.status-refunded {
+  border-left: 4px solid #8b5cf6;
+}
 .status-pending {
   border-left: 4px solid #f59e0b;
 }
@@ -359,6 +403,7 @@ const handleDeleteOrder = async (id) => {
 
 .status-approved .status-badge { color: #34d399; background: rgba(16, 185, 129, 0.1); }
 .status-rejected .status-badge { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+.status-refunded .status-badge { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
 .status-pending .status-badge { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
 
 .dot {
@@ -492,6 +537,13 @@ const handleDeleteOrder = async (id) => {
 .btn-danger-ghost:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: #ef4444;
+}
+
+.refund-status {
+  color: #34d399;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
 }
 
 .btn-apply {

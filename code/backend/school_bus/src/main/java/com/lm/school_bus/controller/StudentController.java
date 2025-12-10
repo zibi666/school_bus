@@ -129,4 +129,28 @@ public class StudentController {
         Order order = studentService.getOrderByInvitationCode(invitationCode);
         return ApiResponse.success("获取成功", order);
     }
+    
+    /**
+     * 通过邀请码加入订单
+     */
+    @PostMapping("/order/join-by-invitation-code/{invitationCode}")
+    public ApiResponse<Order> joinOrderByInvitationCode(@PathVariable String invitationCode, @RequestParam String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            return ApiResponse.error(401, "请先登录");
+        }
+        Order newOrder = studentService.joinOrderByInvitationCode(invitationCode, studentId);
+        return ApiResponse.success("加入成功", newOrder);
+    }
+    
+    /**
+     * 申请退票（仅允许原申请人退票，同时该邀请码下的所有订单都标记为已退票）
+     */
+    @PostMapping("/order/refund/{orderId}")
+    public ApiResponse<Void> refundOrder(@PathVariable Integer orderId, @RequestParam String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            return ApiResponse.error(401, "请先登录");
+        }
+        studentService.refundOrder(orderId, studentId);
+        return ApiResponse.success("退票成功", null);
+    }
 }

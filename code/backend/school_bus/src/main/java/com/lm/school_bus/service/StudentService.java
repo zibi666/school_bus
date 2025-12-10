@@ -174,4 +174,108 @@ public class StudentService {
         
         return order;
     }
+    
+    /**
+     * 通过邀请码加入订单（创建一条新的订单记录，学号为当前用户）
+     * @param invitationCode 邀请码
+     * @param currentStudentId 当前学生的学号
+     * @return 新创建的订单
+     */
+    public Order joinOrderByInvitationCode(String invitationCode, String currentStudentId) {
+        if (invitationCode == null || invitationCode.isEmpty()) {
+            throw new BusinessException(400, "邀请码不能为空");
+        }
+        
+        if (currentStudentId == null || currentStudentId.isEmpty()) {
+            throw new BusinessException(400, "学号不能为空");
+        }
+        
+        // 查询原订单
+        Order originalOrder = orderMapper.selectByInvitationCode(invitationCode);
+        if (originalOrder == null) {
+            throw new BusinessException(404, "邀请码不存在或已过期");
+        }
+        
+        if (!"已通过".equals(originalOrder.getStatus())) {
+            throw new BusinessException(400, "该订单尚未被批准，无法加入");
+        }
+        
+        if (originalOrder.getBusId() == null) {
+            throw new BusinessException(400, "该订单还未分配车辆");
+        }
+        
+        // 检查当前用户是否已经加入过这个订单
+        Order existingOrder = orderMapper.selectExistingJoinedOrder(currentStudentId, originalOrder.getOrderId());
+        if (existingOrder != null) {
+            throw new BusinessException(400, "您已经加入过该订单了");
+        }
+        
+        // 创建新订单（复制原订单的信息，但改变学号、isApplicant）
+        Order newOrder = new Order();
+        newOrder.setStudentId(currentStudentId);
+        newOrder.setDestination(originalOrder.getDestination());
+        newOrder.setRequestedCarType(originalOrder.getRequestedCarType());
+        newOrder.setBusId(originalOrder.getBusId());
+        newOrder.setPrice(originalOrder.getPrice());
+        newOrder.setStatus(originalOrder.getStatus());
+        newOrder.setStartTime(originalOrder.getStartTime());
+        newOrder.setEndTime(originalOrder.getEndTime());
+        newOrder.setIsPaid(false);  // 新加入的订单默认未支付
+        newOrder.setInvitationCode(invitationCode);  // 保留原邀请码，确保邀请码加入链一致
+        newOrder.setIsApplicant(false);  // 标记为非本人申请
+        
+        // 插入新订单
+        orderMapper.insert(newOrder);
+        return newOrder;
+    }
+    
+    /**
+     * 申请退票（仅允许原申请人退票）
+     * @param orderId 订单ID
+     * @param currentStudentId 当前学生学号
+     * @return 是否退票成功
+     */
+    /**
+     * 申请退票：退票成功后，同一邀请码的所有订单都会被标记为已退票
+     * @param orderId 订单ID
+     * @param currentStudentId 当前学生学号
+     * @return 是否退票成功
+     */
+    public void refundOrder(Integer orderId, String currentStudentId) {
+        // 验证订单是否存在
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(404, "订单不存在");
+        }
+        
+        // 只有本人申请的订单才能退票
+        if (!order.getIsApplicant()) {
+            throw new BusinessException(400, "只有原申请人可以申请退票");
+        }
+        
+        // 验证是否为申请人
+        if (!currentStudentId.equals(order.getStudentId())) {
+            throw new BusinessException(400, "只有申请人可以申请退票");
+        }
+        
+        // 验证订单状态
+        if (!"已通过".equals(order.getStatus())) {
+            throw new BusinessException(400, "只有已通过的订单才能退票");
+        }
+        
+        // 验证邀请码是否存在
+        if (order.getInvitationCode() == null || order.getInvitationCode().isEmpty()) {
+            throw new BusinessException(400, "无效的邀请码");
+        }
+        
+        // 批量更新该邀请码的所有订单为已退票
+        int updatedCount = orderMapper.updateStatusByInvitationCode(
+            order.getInvitationCode(),
+            "已退票"
+        );
+        
+        if (updatedCount == 0) {
+            throw new BusinessException(400, "退票失败，请重试");
+        }
+    }
 }

@@ -163,7 +163,18 @@ const fetchData = async () => {
     try {
         const res = await getAllOrders()
         if (res.code === 200) {
-            orders.value = res.data.reverse()
+            // 对于有相同邀请码的订单，只显示一个（申请人的订单）
+            const seen = new Set()
+            const filtered = res.data.filter(order => {
+                if (order.invitationCode) {
+                    if (seen.has(order.invitationCode)) {
+                        return false // 跳过重复的邀请码
+                    }
+                    seen.add(order.invitationCode)
+                }
+                return true
+            })
+            orders.value = filtered.reverse()
         }
         
         const busRes = await getAllBuses()

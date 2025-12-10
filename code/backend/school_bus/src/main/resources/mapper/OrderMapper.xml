@@ -17,6 +17,7 @@
         <result column="reject_reason" property="rejectReason" />
         <result column="is_paid" property="isPaid" />
         <result column="invitation_code" property="invitationCode" />
+        <result column="is_applicant" property="isApplicant" />
         <!-- Association for Bus details if needed, but for now we just map fields -->
     </resultMap>
     
@@ -33,7 +34,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        order_id, student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code
+        order_id, student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code, is_applicant
     </sql>
 
     <select id="selectByStatusOrderByCreateTimeDesc" resultMap="BaseResultMap">
@@ -56,8 +57,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="orderId">
-        INSERT INTO t_order (student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code)
-        VALUES (#{studentId}, #{destination}, #{startTime}, #{endTime}, #{requestedCarType}, #{busId}, #{price}, #{status}, #{rejectReason}, #{isPaid}, #{invitationCode})
+        INSERT INTO t_order (student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code, is_applicant)
+        VALUES (#{studentId}, #{destination}, #{startTime}, #{endTime}, #{requestedCarType}, #{busId}, #{price}, #{status}, #{rejectReason}, #{isPaid}, #{invitationCode}, #{isApplicant})
     </insert>
 
     <update id="update">
@@ -72,7 +73,8 @@
             status = #{status},
             reject_reason = #{rejectReason},
             is_paid = #{isPaid},
-            invitation_code = #{invitationCode}
+            invitation_code = #{invitationCode},
+            is_applicant = #{isApplicant}
         WHERE order_id = #{orderId}
     </update>
 
@@ -105,6 +107,24 @@
         WHERE o.invitation_code = #{invitationCode}
     </select>
 
+    <!-- 检查指定学生是否已经加入过某个订单（通过邀请码加入会创建新订单记录，此查询检查是否重复加入） -->
+    <select id="selectExistingJoinedOrder" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_order o
+        WHERE o.student_id = #{studentId}
+          AND o.bus_id = (
+              SELECT bus_id FROM t_order WHERE order_id = #{originalOrderId}
+          )
+          AND o.start_time = (
+              SELECT start_time FROM t_order WHERE order_id = #{originalOrderId}
+          )
+          AND o.end_time = (
+              SELECT end_time FROM t_order WHERE order_id = #{originalOrderId}
+          )
+          AND o.is_applicant = false
+          AND o.status = '已通过'
+    </select>
+
     <!-- 检查车辆在指定时间段内是否有已通过的订单（时间冲突检查） -->
     <select id="checkTimeConflict" resultType="int">
         SELECT COUNT(*) FROM t_order
@@ -118,5 +138,22 @@
               OR (start_time &gt;= #{startTime} AND end_time &lt;= #{endTime})
           )
     </select>
+
+    <!-- 通过邀请码查询所有订单 -->
+    <select id="selectByInvitationCodeAll" resultMap="OrderWithBusResultMap">
+        SELECT 
+            o.*,
+            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.number, b.price
+        FROM t_order o
+        LEFT JOIN t_bus b ON o.bus_id = b.bus_id
+        WHERE o.invitation_code = #{invitationCode}
+    </select>
+
+    <!-- 批量更新订单状态 -->
+    <update id="updateStatusByInvitationCode">
+        UPDATE t_order
+        SET status = #{status}
+        WHERE invitation_code = #{invitationCode}
+    </update>
 
 </mapper>

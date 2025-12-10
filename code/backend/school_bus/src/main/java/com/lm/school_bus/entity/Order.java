@@ -18,6 +18,7 @@ public class Order {
     private String rejectReason;
     private Boolean isPaid = false;  // 是否已支付
     private String invitationCode;  // 邀请码
+    private Boolean isApplicant = true;  // 是否本人申请（true: 本人申请, false: 通过邀请码加入）
     
     // Transient fields for easier frontend display if needed
     private Bus bus;
