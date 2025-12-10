@@ -559,11 +559,11 @@ const deleteBus = async (id) => {
 }
 
 .glass-input {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1.5px solid rgba(244, 63, 94, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(244, 63, 94, 0.3);
   border-radius: 12px;
   padding: 12px 14px;
-  color: #f8fafc;
+  color: #000000;
   outline: none;
   transition: all 0.3s ease;
   font-size: 14px;
@@ -573,14 +573,14 @@ const deleteBus = async (id) => {
 .glass-input:focus {
   border-color: #f43f5e;
   box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(255, 255, 255, 0.98);
 }
 
 select.glass-input {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 18px;
@@ -614,12 +614,13 @@ select.glass-input {
 
 /* Time Selector Panel */
 .time-selector-panel {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(225, 29, 72, 0.02) 100%);
-  border: 1px solid rgba(244, 63, 94, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(248, 250, 252, 0.4) 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.2);
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.08);
 }
 
 .time-selector-content {
@@ -637,11 +638,15 @@ select.glass-input {
 }
 
 .time-input-group label {
-  color: #f8fafc;
+  color: #0f172a;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .time-inputs {
@@ -651,26 +656,29 @@ select.glass-input {
 }
 
 .time-inputs input {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1.5px solid rgba(244, 63, 94, 0.2);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid rgba(244, 63, 94, 0.25);
   border-radius: 10px;
   padding: 10px 12px;
-  color: #f8fafc;
+  color: #1e293b;
   outline: none;
   transition: all 0.3s ease;
   font-size: 13px;
   font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .time-inputs input:focus {
   border-color: #f43f5e;
-  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
-  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.15);
+  background: rgba(255, 255, 255, 0.98);
+  transform: translateY(-1px);
 }
 
 .separator {
-  color: #cbd5e1;
-  font-weight: 600;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .time-info {
@@ -680,11 +688,13 @@ select.glass-input {
 
 .time-range-text {
   margin: 0;
-  color: #cbd5e1;
+  color: #1e293b;
   font-size: 14px;
-  font-weight: 500;
-  padding: 8px 14px;
-  background: rgba(244, 63, 94, 0.1);
-  border-radius: 8px;
+  font-weight: 600;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(225, 29, 72, 0.08) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.08);
 }
 </style>

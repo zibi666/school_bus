@@ -13,7 +13,9 @@
     <div v-if="orders.length === 0" class="empty-state">
       <div class="empty-icon">📂</div>
       <p>暂无申请记录</p>
-      <button class="btn-secondary" @click="$router.push('/student/charter')">去申请</button>
+      <button class="btn-apply" @click="$router.push('/student/charter')">
+        <span class="icon-go">🚌</span> 去申请
+      </button>
     </div>
 
     <div v-else class="orders-grid">
@@ -436,5 +438,53 @@ const handleDeleteOrder = async (id) => {
 .btn-danger-ghost:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: #ef4444;
+}
+
+.btn-apply {
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 14px 32px;
+  border-radius: 28px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-apply::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+  transition: left 0.3s ease;
+  z-index: 1;
+}
+
+.btn-apply:hover::before {
+  left: 100%;
+}
+
+.btn-apply:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.4);
+}
+
+.btn-apply:active {
+  transform: translateY(0);
+}
+
+.icon-go {
+  font-size: 18px;
+  display: inline-block;
 }
 </style>
