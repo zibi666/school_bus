@@ -51,7 +51,7 @@
           <div v-if="order.invitationCode" class="info-row">
             <span class="label">邀请码</span>
             <span class="value invitation-code" @click="copyInvitationCode(order.invitationCode)">
-              {{ order.invitationCode }} 📋
+              {{ order.invitationCode }}
             </span>
           </div>
           <div v-if="order.status === '审核中'" class="info-row">
@@ -393,6 +393,8 @@ const handleDeleteOrder = async (id) => {
 
 .value {
   color: #ffffff;
+  text-align: right;
+  flex: 1;
 }
 
 .highlight-price {
