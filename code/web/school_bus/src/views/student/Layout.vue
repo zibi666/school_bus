@@ -112,6 +112,16 @@ const handleJoinOrder = async () => {
       return
     }
     
+    // 先查询邀请码对应的订单，防止申请人加入自己的订单
+    const checkRes = await getOrderByInvitationCode(invitationCodeInput.value)
+    if (checkRes.code === 200) {
+      const orig = checkRes.data
+      if (orig && orig.studentId === userInfo.studentId) {
+        joinError.value = '不能加入自己发布的订单'
+        return
+      }
+    }
+
     const res = await joinOrderByInvitationCode(invitationCodeInput.value, userInfo.studentId)
     if (res.code === 200) {
       joinSuccess.value = `✓ 成功！订单已添加到您的订单列表`

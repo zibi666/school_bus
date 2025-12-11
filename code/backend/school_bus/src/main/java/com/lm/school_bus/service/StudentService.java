@@ -209,6 +209,11 @@ public class StudentService {
         if (existingOrder != null) {
             throw new BusinessException(400, "您已经加入过该订单了");
         }
+
+        // 申请人不能加入自己的邀请码
+        if (currentStudentId.equals(originalOrder.getStudentId())) {
+            throw new BusinessException(400, "申请人不能加入自己的邀请码");
+        }
         
         // 创建新订单（复制原订单的信息，但改变学号、isApplicant）
         Order newOrder = new Order();
