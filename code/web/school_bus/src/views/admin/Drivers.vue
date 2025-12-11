@@ -109,8 +109,11 @@
             <input id="number" v-model="form.number" required placeholder="例如：13800138000" class="glass-input">
           </div>
           <div class="form-group">
-            <label for="price">每小时单价（元）</label>
-            <input id="price" v-model.number="form.price" type="number" min="0" required placeholder="请输入整数单价" class="glass-input">
+            <label>每小时单价（元）</label>
+            <div class="price-auto-info">
+              <span class="price-value">¥{{ getAutoPrice(form.carType) }}/小时</span>
+              <span class="price-hint">（根据车型自动设置：大巴800、中巴600、商务车1000）</span>
+            </div>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn-ghost" @click="showAddModal = false">取消</button>
@@ -128,7 +131,17 @@ import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi, checkBusAv
 
 const buses = ref([])
 const showAddModal = ref(false)
-const form = reactive({ plateNumber: '', carType: '', driverName: '', number: '', price: '' })
+const form = reactive({ plateNumber: '', carType: '', driverName: '', number: '' })
+
+// 根据车型自动获取价格
+const getAutoPrice = (carType) => {
+  const priceMap = {
+    '大巴': 800,
+    '中巴': 600,
+    '商务车': 1000
+  }
+  return priceMap[carType] || 0
+}
 
 // 时间选择相关
 const queryDate = ref('')
@@ -241,7 +254,7 @@ const addBus = async () => {
     try {
         const res = await addBusApi({
           ...form,
-          price: Number(form.price),
+          price: getAutoPrice(form.carType),
           isActive: true
         })
         if (res.code === 200) {
@@ -250,7 +263,6 @@ const addBus = async () => {
             form.carType = ''
             form.driverName = ''
             form.number = ''
-            form.price = ''
             fetchBuses()
         } else {
             // 显示后端返回的具体错误信息
@@ -634,6 +646,28 @@ select.glass-input {
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
+}
+
+/* 价格自动生成提示样式 */
+.price-auto-info {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1.5px solid rgba(244, 63, 94, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price-auto-info .price-value {
+  color: #f43f5e;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.price-auto-info .price-hint {
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .btn-ghost:hover {

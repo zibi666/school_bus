@@ -61,14 +61,34 @@
                       <input type="date" v-model="timePickerData.date" />
                     </div>
                     
-                    <div class="time-section">
-                      <div class="time-item">
-                        <label>开始时间</label>
-                        <input type="time" v-model="timePickerData.startTime" />
+                    <div class="time-section time-grid">
+                      <div class="time-item time-grid-col">
+                        <label for="startHour">开始 - 时</label>
+                        <select id="startHour" v-model="timePickerData.startHour" class="time-select">
+                          <option value="">时</option>
+                          <option v-for="h in availableHours" :key="h" :value="h">{{ h }}</option>
+                        </select>
                       </div>
-                      <div class="time-item">
-                        <label>结束时间</label>
-                        <input type="time" v-model="timePickerData.endTime" />
+                      <div class="time-item time-grid-col">
+                        <label for="startMin">开始 - 分</label>
+                        <select id="startMin" v-model="timePickerData.startMin" class="time-select">
+                          <option value="">分</option>
+                          <option v-for="m in availableMins" :key="m" :value="m">{{ m }}</option>
+                        </select>
+                      </div>
+                      <div class="time-item time-grid-col">
+                        <label for="endHour">结束 - 时</label>
+                        <select id="endHour" v-model="timePickerData.endHour" class="time-select">
+                          <option value="">时</option>
+                          <option v-for="h in availableHours" :key="h + '-end'" :value="h">{{ h }}</option>
+                        </select>
+                      </div>
+                      <div class="time-item time-grid-col">
+                        <label for="endMin">结束 - 分</label>
+                        <select id="endMin" v-model="timePickerData.endMin" class="time-select">
+                          <option value="">分</option>
+                          <option v-for="m in availableMins" :key="m + '-end'" :value="m">{{ m }}</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -188,26 +208,78 @@ const priceInfo = reactive({
 })
 const timePickerData = reactive({
   date: '',
+  // 分别存小时与分钟
+  startHour: '',
+  startMin: '',
+  endHour: '',
+  endMin: '',
+  // 保持兼容用于显示/提交
   startTime: '',
   endTime: ''
 })
+
+// 可选小时和分钟（小时从05到23，分钟只允许00和30）
+const availableHours = Array.from({ length: 19 }, (_, i) => String(i + 5).padStart(2, '0'))
+const availableMins = [ '00', '30' ]
 const form = reactive({
   destination: '',
   requestedCarType: ''
 })
 
+
+
 const confirmTimeSelection = () => {
-  if (!timePickerData.date || !timePickerData.startTime || !timePickerData.endTime) {
+  // 必须填写日期和时分
+  if (!timePickerData.date || !timePickerData.startHour || !timePickerData.startMin || !timePickerData.endHour || !timePickerData.endMin) {
     alert('请填写完整的时间信息')
     return
   }
-  
-  if (timePickerData.startTime >= timePickerData.endTime) {
+
+  // 验证日期不能是今天之前
+  const selectedDate = new Date(timePickerData.date)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  selectedDate.setHours(0, 0, 0, 0)
+  if (selectedDate < today) {
+    alert('预约日期不能是今天之前')
+    return
+  }
+
+  // 组合时间字符串并保存（用于显示与提交）
+  const startTimeStr = `${timePickerData.startHour}:${timePickerData.startMin}`
+  const endTimeStr = `${timePickerData.endHour}:${timePickerData.endMin}`
+
+  // 验证开始时间范围：5:00 - 21:00
+  const startMinutes = Number(timePickerData.startHour) * 60 + Number(timePickerData.startMin)
+  if (startMinutes < 5 * 60 || startMinutes > 21 * 60) {
+    alert('开始时间必须在 05:00 至 21:00 之间')
+    return
+  }
+
+  // 验证结束时间范围：最晚 23:00
+  const endMinutes = Number(timePickerData.endHour) * 60 + Number(timePickerData.endMin)
+  if (endMinutes > 23 * 60) {
+    alert('结束时间最晚为 23:00')
+    return
+  }
+
+  // 验证开始时间必须早于结束时间
+  if (startMinutes >= endMinutes) {
     alert('开始时间必须早于结束时间')
     return
   }
-  
-  // 直接关闭，不需要再单独存储 usageTime
+
+  // 验证租车时间不少于2小时
+  const durationMinutes = endMinutes - startMinutes
+  if (durationMinutes < 120) {
+    alert('租车时间不得少于2小时')
+    return
+  }
+
+  // 保存用于显示并关闭模态
+  timePickerData.startTime = startTimeStr
+  timePickerData.endTime = endTimeStr
+
   showTimePicker.value = false
 }
 
@@ -223,9 +295,11 @@ const submitOrder = async () => {
         return
     }
 
-    // 构建ISO格式的时间戳
-    const startDateTime = `${timePickerData.date}T${timePickerData.startTime}:00`
-    const endDateTime = `${timePickerData.date}T${timePickerData.endTime}:00`
+      // 构建ISO格式的时间戳（如果没有 startTime 就从小时/分钟组合）
+    const startTimeStr = timePickerData.startTime || `${timePickerData.startHour}:${timePickerData.startMin}`
+    const endTimeStr = timePickerData.endTime || `${timePickerData.endHour}:${timePickerData.endMin}`
+    const startDateTime = `${timePickerData.date}T${startTimeStr}:00`
+    const endDateTime = `${timePickerData.date}T${endTimeStr}:00`
 
     // 先计算价格，传递实际的时间而不是文本描述
     const priceRes = await calculateOrderPrice({
@@ -735,8 +809,18 @@ const cancelPayment = () => {
 
 .time-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+/* 两列布局：一列时，一列分；每个时间（开始/结束）占一行 */
+.time-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.time-grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .time-item {
@@ -777,10 +861,42 @@ const cancelPayment = () => {
 }
 
 .date-section input:focus,
-.time-item input:focus {
+.time-item input:focus,
+.time-select:focus {
   outline: none;
   border-color: rgba(34, 211, 238, 0.5);
   background: rgba(34, 211, 238, 0.1);
+}
+
+.time-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0f172a; /* 暗黑背景 */
+  color: #ffffff; /* 白字 */
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.time-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* 某些浏览器在展开下拉时需要这个样式以确保项为暗色 */
+.time-select::-ms-expand { display: none; }
+.time-select:focus {
+  background: #0b1220;
+  color: #ffffff;
 }
 
 .time-picker-footer {

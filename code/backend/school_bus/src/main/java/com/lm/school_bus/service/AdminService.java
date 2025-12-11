@@ -22,10 +22,16 @@ public class AdminService {
     private BusMapper busMapper;
 
     public List<Order> getAllOrders(String status) {
+        List<Order> orders;
         if (status != null && !status.isEmpty()) {
-            return orderMapper.selectByStatusOrderByCreateTimeDesc(status);
+            orders = orderMapper.selectByStatusOrderByCreateTimeDesc(status);
+        } else {
+            orders = orderMapper.selectAllOrderByCreateTimeDesc();
         }
-        return orderMapper.selectAllOrderByCreateTimeDesc();
+        // 过滤掉未支付的订单，管理员只能看到已支付的订单
+        return orders.stream()
+                .filter(order -> order.getIsPaid() != null && order.getIsPaid())
+                .toList();
     }
 
     @Transactional
@@ -93,11 +99,29 @@ public class AdminService {
         if (existingBus != null) {
             throw new BusinessException(400, "该车牌号已存在，请勿添加重复车牌号");
         }
-        if (bus.getPrice() == null || bus.getPrice() <= 0) {
-            throw new BusinessException(400, "请填写有效的单价");
+        
+        // 根据车型自动设置价格
+        Integer autoPrice = getAutoPriceByCarType(bus.getCarType());
+        if (autoPrice == null) {
+            throw new BusinessException(400, "无效的车型");
         }
+        bus.setPrice(autoPrice);
+        
         busMapper.insert(bus);
         return bus;
+    }
+    
+    /**
+     * 根据车型获取自动价格
+     */
+    private Integer getAutoPriceByCarType(String carType) {
+        if (carType == null) return null;
+        return switch (carType) {
+            case "大巴" -> 800;
+            case "中巴" -> 600;
+            case "商务车" -> 1000;
+            default -> null;
+        };
     }
 
     @Transactional
