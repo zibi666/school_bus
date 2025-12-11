@@ -5,6 +5,7 @@ import com.lm.school_bus.entity.Bus;
 import com.lm.school_bus.entity.Order;
 import com.lm.school_bus.entity.Student;
 import com.lm.school_bus.service.StudentService;
+import com.lm.school_bus.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -138,6 +139,17 @@ public class StudentController {
         if (studentId == null || studentId.isEmpty()) {
             return ApiResponse.error(401, "请先登录");
         }
+        // 额外检查：申请人不能加入自己的邀请码，提前返回友好错误信息
+        try {
+            Order existing = studentService.getOrderByInvitationCode(invitationCode);
+            if (existing != null && studentId.equals(existing.getStudentId())) {
+                return ApiResponse.error(400, "申请人不能加入自己的车辆");
+            }
+        } catch (BusinessException e) {
+            // 如果邀请码不存在或未通过等，直接把业务错误返回给前端
+            return ApiResponse.error(e.getCode(), e.getMessage());
+        }
+
         Order newOrder = studentService.joinOrderByInvitationCode(invitationCode, studentId);
         return ApiResponse.success("加入成功", newOrder);
     }

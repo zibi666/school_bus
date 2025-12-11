@@ -158,20 +158,33 @@ public class StudentService {
         if (invitationCode == null || invitationCode.isEmpty()) {
             throw new BusinessException(400, "邀请码不能为空");
         }
-        
-        Order order = orderMapper.selectByInvitationCode(invitationCode);
-        if (order == null) {
+        // 使用返回多行的查询，避免当同一邀请码下存在多条记录（申请人+加入者）时抛出 TooManyResults
+        java.util.List<Order> list = orderMapper.selectByInvitationCodeAll(invitationCode);
+        if (list == null || list.isEmpty()) {
             throw new BusinessException(404, "邀请码不存在或已过期");
         }
-        
+
+        // 优先选择原申请人（is_applicant = true）对应的订单
+        Order order = null;
+        for (Order o : list) {
+            if (Boolean.TRUE.equals(o.getIsApplicant())) {
+                order = o;
+                break;
+            }
+        }
+        if (order == null) {
+            // 如果没有标记申请人的记录，选择第一条记录作为退路
+            order = list.get(0);
+        }
+
         if (!"已通过".equals(order.getStatus())) {
             throw new BusinessException(400, "该订单尚未被批准，无法加入");
         }
-        
+
         if (order.getBusId() == null) {
             throw new BusinessException(400, "该订单还未分配车辆");
         }
-        
+
         return order;
     }
     

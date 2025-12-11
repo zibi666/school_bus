@@ -137,8 +137,13 @@ const handleJoinOrder = async () => {
     }
   } catch (e) {
     console.error(e)
-    if (e && e.message) {
+    // 优先显示后端返回的 ApiResponse.message（axios 将其放在 e.response.data）
+    if (e && e.response && e.response.data && e.response.data.message) {
+      joinError.value = e.response.data.message
+    } else if (e && e.message) {
       joinError.value = e.message
+    } else if (typeof e === 'string') {
+      joinError.value = e
     } else {
       joinError.value = '加入失败，请检查邀请码是否正确'
     }
