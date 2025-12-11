@@ -228,6 +228,26 @@ public class StudentService {
         orderMapper.insert(newOrder);
         return newOrder;
     }
+
+    /**
+     * 退出通过邀请码加入的订单
+     */
+    public void leaveJoinedOrder(Integer orderId, String currentStudentId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(404, "订单不存在");
+        }
+        // 只能退出自己加入的（非申请人）订单
+        if (Boolean.TRUE.equals(order.getIsApplicant())) {
+            throw new BusinessException(400, "只有通过邀请码加入的学生可以退出该订单");
+        }
+        if (!currentStudentId.equals(order.getStudentId())) {
+            throw new BusinessException(400, "只能由加入该订单的学生本人执行退出操作");
+        }
+
+        // 物理删除该条记录
+        orderMapper.deleteById(orderId);
+    }
     
     /**
      * 申请退票（仅允许原申请人退票）

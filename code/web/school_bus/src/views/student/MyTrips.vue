@@ -98,6 +98,12 @@
           </button>
         </div>
 
+          <div class="card-footer" v-if="order.status === '已通过' && !order.isApplicant">
+            <button class="btn-danger-ghost" @click="handleLeaveOrder(order.orderId)">
+              退出包车
+            </button>
+          </div>
+
         <div class="card-footer" v-if="order.status === '已拒绝'">
           <button class="btn-danger-ghost" @click="handleDeleteOrder(order.orderId)">
             删除订单
@@ -160,7 +166,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 // 请确保这里的 api 引用路径是正确的
-import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder } from '../../api'
+import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder, leaveOrder } from '../../api'
 
 const route = useRoute()
 const orders = ref([])
@@ -190,7 +196,7 @@ const fetchOrders = async () => {
       }
       orders.value = list.reverse() // Show newest first
       // ensure boolean flags are normalized
-      orders.value.forEach(o => { o.isPaid = !!o.isPaid })
+      orders.value.forEach(o => { o.isPaid = !!o.isPaid; o.isApplicant = !!o.isApplicant })
     }
   } catch (e) {
     console.error(e)
@@ -325,6 +331,23 @@ const handleRefundOrder = async (id) => {
             alert('退票失败')
         }
     }
+  }
+}
+
+const handleLeaveOrder = async (id) => {
+  if (!confirm('确定要退出该包车吗？')) return
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    const res = await leaveOrder(id, userInfo.studentId)
+    if (res.code === 200) {
+      alert('已退出包车')
+      fetchOrders()
+    } else {
+      alert(res.message || '退出失败')
+    }
+  } catch (e) {
+    if (e && e.message) alert(e.message)
+    else alert('退出失败')
   }
 }
 

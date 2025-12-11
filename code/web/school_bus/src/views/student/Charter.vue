@@ -2,189 +2,158 @@
   <div class="page-container">
     <div class="header-row">
       <div>
-        <p class="pill">一键预约 · 校园出行</p>
-        <h2 class="page-title">申请包车</h2>
-        <p class="subhead">填写行程需求，管理员将快速完成审核与车辆调度。</p>
+        <h2 class="page-title">我的订单</h2>
+        <p class="subhead">查看您的包车申请记录与审核状态。</p>
       </div>
-      <div class="stat-ribbon">
-        <div class="stat">
-          <span class="stat-num">3</span>
-          <span class="stat-label">车型可选</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num">5 min</span>
-          <span class="stat-label">平均审核</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num">专车</span>
-          <span class="stat-label">专属司机</span>
-        </div>
-      </div>
+      <button class="btn-primary btn-new" @click="$router.push('/student/charter')">
+        <span class="icon-plus">+</span> 新申请
+      </button>
     </div>
 
-    <div class="grid">
-      <div class="card card-main">
-        <div class="card-head">
-          <h3>填写行程</h3>
-          <span class="badge">实时提交</span>
-        </div>
-        <form @submit.prevent="submitOrder" class="apply-form">
-          <div class="form-group">
-            <label for="destination">目的地</label>
-            <input id="destination" type="text" v-model="form.destination" placeholder="请输入目的地" required />
-          </div>
+    <div v-if="orders.length === 0" class="empty-state">
+      <div class="empty-icon">📂</div>
+      <p>暂无申请记录</p>
+      <button class="btn-apply" @click="$router.push('/student/charter')">
+        <span class="icon-go">🚌</span> 去申请
+      </button>
+    </div>
 
-          <div class="form-group">
-            <label for="usage">使用时间段</label>
-            <div class="time-picker-container">
-              <div class="time-input" @click="showTimePicker = true">
-                <span v-if="timePickerData.date && timePickerData.startTime && timePickerData.endTime" class="time-display">
-                  {{ timePickerData.date }} {{ timePickerData.startTime }}-{{ timePickerData.endTime }}
-                </span>
-                <span v-else class="time-placeholder">请选择时间段</span>
-                <svg class="time-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              
-              <div v-if="showTimePicker" class="time-picker-modal" @click.self="showTimePicker = false">
-                <div class="time-picker-content">
-                  <div class="time-picker-header">
-                    <h3>选择时间段</h3>
-                    <button type="button" class="close-btn" @click="showTimePicker = false">×</button>
-                  </div>
-                  
-                  <div class="time-picker-body">
-                    <div class="date-section">
-                      <label>日期</label>
-                      <input type="date" v-model="timePickerData.date" />
-                    </div>
-                    
-                    <div class="time-section time-grid">
-                      <div class="time-item time-grid-col">
-                        <label for="startHour">开始 - 时</label>
-                        <select id="startHour" v-model="timePickerData.startHour" class="time-select">
-                          <option value="">时</option>
-                          <option v-for="h in availableHours" :key="h" :value="h">{{ h }}</option>
-                        </select>
-                      </div>
-                      <div class="time-item time-grid-col">
-                        <label for="startMin">开始 - 分</label>
-                        <select id="startMin" v-model="timePickerData.startMin" class="time-select">
-                          <option value="">分</option>
-                          <option v-for="m in availableMins" :key="m" :value="m">{{ m }}</option>
-                        </select>
-                      </div>
-                      <div class="time-item time-grid-col">
-                        <label for="endHour">结束 - 时</label>
-                        <select id="endHour" v-model="timePickerData.endHour" class="time-select">
-                          <option value="">时</option>
-                          <option v-for="h in availableHours" :key="h + '-end'" :value="h">{{ h }}</option>
-                        </select>
-                      </div>
-                      <div class="time-item time-grid-col">
-                        <label for="endMin">结束 - 分</label>
-                        <select id="endMin" v-model="timePickerData.endMin" class="time-select">
-                          <option value="">分</option>
-                          <option v-for="m in availableMins" :key="m + '-end'" :value="m">{{ m }}</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="time-picker-footer">
-                    <button type="button" class="btn-cancel" @click="showTimePicker = false">取消</button>
-                    <button type="button" class="btn-confirm" @click="confirmTimeSelection">确认</button>
-                  </div>
-                </div>
-              </div>
+    <div v-else class="orders-grid">
+      <div 
+        v-for="order in orders" 
+        :key="order.id" 
+        class="order-card"
+        :class="statusClass(order.status)"
+      >
+        <div class="card-top">
+          <div class="status-badge">
+            <span class="dot"></span>
+            {{ order.status }}
+          </div>
+          <span class="date">{{ formatDate(order.startTime) }}</span>
+        </div>
+        
+        <div class="card-body">
+          <h3 class="destination">{{ order.destination }}</h3>
+          
+          <div class="info-row">
+            <span class="label">时间</span>
+            <span class="value">{{ formatTimeRange(order.startTime, order.endTime) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">车型</span>
+            <span class="value">{{ order.requestedCarType }}</span>
+          </div>
+          <div v-if="order.price" class="info-row">
+            <span class="label">总价</span>
+            <span class="value highlight-price">¥{{ order.price }}</span>
+          </div>
+          <div v-if="order.invitationCode && order.isApplicant && order.status === '已通过'" class="info-row">
+            <span class="label">邀请码</span>
+            <span class="value invitation-code" @click="copyInvitationCode(order.invitationCode)">
+              {{ order.invitationCode }}
+            </span>
+          </div>
+          <div v-if="order.status === '审核中'" class="info-row">
+            <span class="label">支付状态</span>
+            <span class="value" :class="order.isPaid ? 'paid' : 'unpaid'">
+              {{ order.isPaid ? '✓ 已支付' : '未支付' }}
+            </span>
+          </div>
+          
+          <div v-if="order.status === '已通过' && order.busInfo" class="approved-box">
+            <div class="detail-row">
+              <span class="d-label">车牌</span>
+              <span class="d-value highlight">{{ order.busInfo.plateNumber }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="d-label">司机</span>
+              <span class="d-value">{{ order.busInfo.driverName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="d-label">电话</span>
+              <span class="d-value">{{ order.busInfo.number }}</span>
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="carType">需求车型</label>
-            <select id="carType" v-model="form.requestedCarType" required:class="{ 'is-empty': form.requestedCarType === '' }">
-              <option value="" disabled>请选择车型</option>
-              <option value="大巴">大巴 (45座)</option>
-              <option value="中巴">中巴 (20座)</option>
-              <option value="商务车">商务车 (7座)</option>
-            </select>
+          <div v-if="order.status === '已拒绝'" class="reject-box">
+            <p class="reject-reason">拒绝理由：{{ order.rejectReason }}</p>
           </div>
+        </div>
 
-          <div class="actions">
-            <button type="submit" class="btn-primary" :disabled="loading">
-              {{ loading ? '提交中...' : '提交申请' }}
+        <div class="card-footer" v-if="order.status === '审核中'">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; width: 100%;">
+            <button v-if="!order.isPaid" class="btn-pay-small" @click="openPay(order)">
+              立即支付
+            </button>
+            <span v-else></span>
+            <button class="btn-danger-ghost" @click="handleCancelOrder(order.orderId)">
+              取消申请
             </button>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <div class="card card-side">
-        <h4>小贴士</h4>
-        <ul class="tips">
-          <li>时间段尽量精确，便于调度车辆与司机。</li>
-          <li>车辆审核通过后，可在“我的订单”查看车牌与司机信息。</li>
-          <li>如需临时修改，请联系管理员或重新提交新申请。</li>
-        </ul>
-        <div class="mini-cards">
-          <div class="mini">
-            <span class="tag">安全</span>
-            <p>全程保险与校方备案</p>
-          </div>
-          <div class="mini">
-            <span class="tag">准点</span>
-            <p>行程延误将优先补位</p>
-          </div>
-          <div class="mini">
-            <span class="tag">舒适</span>
-            <p>精选商务、豪华巴士</p>
-          </div>
+        <div class="card-footer" v-if="order.status === '已通过' && order.isApplicant">
+          <button class="btn-danger-ghost" @click="handleRefundOrder(order.orderId)">
+            申请退票
+          </button>
+        </div>
+
+        <div class="card-footer" v-if="order.status === '已通过' && !order.isApplicant">
+          <button class="btn-danger-ghost" @click="handleQuitOrder(order)">
+            退出包车
+          </button>
+        </div>
+
+        <div class="card-footer" v-if="order.status === '已拒绝'">
+          <button class="btn-danger-ghost" @click="handleDeleteOrder(order.orderId)">
+            删除订单
+          </button>
+        </div>
+
+        <div class="card-footer" v-if="order.status === '已退票'">
+          <p class="refund-status">✓ 已退票</p>
         </div>
       </div>
     </div>
 
-    <!-- 支付弹窗 -->
     <div v-if="showPaymentModal" class="payment-modal" @click.self="cancelPayment">
       <div class="payment-content">
         <div class="payment-header">
           <h3>确认支付</h3>
           <button type="button" class="close-btn" @click="cancelPayment">×</button>
         </div>
-        
         <div class="payment-body">
           <div class="payment-info">
             <div class="info-row">
               <span class="label">目的地</span>
-              <span class="value">{{ form.destination }}</span>
+              <span class="value">{{ currentPaymentOrder && currentPaymentOrder.destination }}</span>
             </div>
             <div class="info-row">
               <span class="label">用车时间</span>
-              <span class="value">{{ timePickerData.date }} {{ timePickerData.startTime }}-{{ timePickerData.endTime }}</span>
+              <span class="value">{{ currentPaymentOrder ? formatTimeRange(currentPaymentOrder.startTime, currentPaymentOrder.endTime) : '' }}</span>
             </div>
             <div class="info-row">
               <span class="label">车型</span>
-              <span class="value">{{ form.requestedCarType }}</span>
+              <span class="value">{{ currentPaymentOrder && currentPaymentOrder.requestedCarType }}</span>
             </div>
             <div class="info-row">
               <span class="label">用车时长</span>
-              <span class="value">{{ priceInfo.formattedHours }}</span>
+              <span class="value">{{ currentPaymentOrder ? formatDuration(currentPaymentOrder.startTime, currentPaymentOrder.endTime) : '' }}</span>
             </div>
             <div class="info-row price-row">
               <span class="label">应付金额</span>
-              <span class="price-value">¥{{ priceInfo.price }}</span>
+              <span class="price-value">¥{{ currentPaymentOrder && currentPaymentOrder.price }}</span>
             </div>
           </div>
-          
           <div class="payment-notice">
             <p>⚠️ 支付成功后，订单将提交至管理员审核</p>
             <p>💡 审核通过后可在"我的订单"查看车辆信息</p>
           </div>
         </div>
-        
         <div class="payment-footer">
           <button type="button" class="btn-cancel-pay" @click="cancelPayment">取消支付</button>
-          <button type="button" class="btn-pay" @click="handlePayment">确认支付</button>
+          <button type="button" class="btn-pay" @click="confirmPay">确认支付</button>
         </div>
       </div>
     </div>
@@ -192,187 +161,197 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { createOrder, calculateOrderPrice, payOrder } from '../../api' 
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder, leaveOrder } from '../../api'
 
-const router = useRouter()
-const loading = ref(false)
-const showTimePicker = ref(false)
+const route = useRoute()
+const orders = ref([])
 const showPaymentModal = ref(false)
-const currentOrderId = ref(null)
-const priceInfo = reactive({
-  price: 0,
-  hours: 0,
-  formattedHours: ''
-})
-const timePickerData = reactive({
-  date: '',
-  // 分别存小时与分钟
-  startHour: '',
-  startMin: '',
-  endHour: '',
-  endMin: '',
-  // 保持兼容用于显示/提交
-  startTime: '',
-  endTime: ''
-})
+const currentPaymentOrder = ref(null)
 
-// 可选小时和分钟（小时从05到23，分钟只允许00和30）
-const availableHours = Array.from({ length: 19 }, (_, i) => String(i + 5).padStart(2, '0'))
-const availableMins = [ '00', '30' ]
-const form = reactive({
-  destination: '',
-  requestedCarType: ''
-})
-
-
-
-const confirmTimeSelection = () => {
-  // 必须填写日期和时分
-  if (!timePickerData.date || !timePickerData.startHour || !timePickerData.startMin || !timePickerData.endHour || !timePickerData.endMin) {
-    alert('请填写完整的时间信息')
-    return
-  }
-
-  // 验证日期不能是今天之前
-  const selectedDate = new Date(timePickerData.date)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  selectedDate.setHours(0, 0, 0, 0)
-  if (selectedDate < today) {
-    alert('预约日期不能是今天之前')
-    return
-  }
-
-  // 组合时间字符串并保存（用于显示与提交）
-  const startTimeStr = `${timePickerData.startHour}:${timePickerData.startMin}`
-  const endTimeStr = `${timePickerData.endHour}:${timePickerData.endMin}`
-
-  // 验证开始时间范围：5:00 - 21:00
-  const startMinutes = Number(timePickerData.startHour) * 60 + Number(timePickerData.startMin)
-  if (startMinutes < 5 * 60 || startMinutes > 21 * 60) {
-    alert('开始时间必须在 05:00 至 21:00 之间')
-    return
-  }
-
-  // 验证结束时间范围：最晚 23:00
-  const endMinutes = Number(timePickerData.endHour) * 60 + Number(timePickerData.endMin)
-  if (endMinutes > 23 * 60) {
-    alert('结束时间最晚为 23:00')
-    return
-  }
-
-  // 验证开始时间必须早于结束时间
-  if (startMinutes >= endMinutes) {
-    alert('开始时间必须早于结束时间')
-    return
-  }
-
-  // 验证租车时间不少于2小时
-  const durationMinutes = endMinutes - startMinutes
-  if (durationMinutes < 120) {
-    alert('租车时间不得少于2小时')
-    return
-  }
-
-  // 保存用于显示并关闭模态
-  timePickerData.startTime = startTimeStr
-  timePickerData.endTime = endTimeStr
-
-  showTimePicker.value = false
-}
-
-const submitOrder = async () => {
-  loading.value = true
+const fetchOrders = async () => {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  if (!userInfo.studentId) return
+  
   try {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    const studentId = userInfo.studentId
-    
-    if (!studentId) {
-        alert('请先登录')
-        router.push('/login')
-        return
-    }
-
-      // 构建ISO格式的时间戳（如果没有 startTime 就从小时/分钟组合）
-    const startTimeStr = timePickerData.startTime || `${timePickerData.startHour}:${timePickerData.startMin}`
-    const endTimeStr = timePickerData.endTime || `${timePickerData.endHour}:${timePickerData.endMin}`
-    const startDateTime = `${timePickerData.date}T${startTimeStr}:00`
-    const endDateTime = `${timePickerData.date}T${endTimeStr}:00`
-
-    // 先计算价格，传递实际的时间而不是文本描述
-    const priceRes = await calculateOrderPrice({
-      startTime: startDateTime,
-      endTime: endDateTime,
-      requestedCarType: form.requestedCarType
-    })
-    
-    if (priceRes.code !== 200) {
-      alert(priceRes.message || '价格计算失败')
-      return
-    }
-    
-    // 保存价格信息
-    priceInfo.price = priceRes.data.price
-    priceInfo.hours = priceRes.data.hours
-    priceInfo.formattedHours = priceRes.data.formattedHours
-
-    const res = await createOrder({
-        destination: form.destination,
-        startTime: startDateTime,
-        endTime: endDateTime,
-        requestedCarType: form.requestedCarType,
-        price: priceRes.data.price,
-        studentId
-    })
-    
+    const res = await getMyOrders(userInfo.studentId)
     if (res.code === 200) {
-        // 保存订单ID并显示支付弹窗
-        currentOrderId.value = res.data.orderId
-        showPaymentModal.value = true
-    } else {
-        alert(res.message || '提交失败')
+      const list = res.data
+      for (let order of list) {
+        if (order.status === '已通过' && order.busId) {
+            try {
+                const busRes = await getBus(order.busId)
+                if (busRes.code === 200) {
+                    order.busInfo = busRes.data
+                }
+            } catch (e) {
+                console.error('Failed to fetch bus info', e)
+            }
+        }
+      }
+      orders.value = list.reverse() 
+      orders.value.forEach(o => { o.isPaid = !!o.isPaid; o.isApplicant = !!o.isApplicant })
     }
   } catch (e) {
     console.error(e)
-    // 显示后端返回的具体错误信息，而不是通用的"提交异常"
-    if (e && e.message) {
-      alert(e.message)
-    } else {
-      alert('提交异常')
-    }
-  } finally {
-    loading.value = false
   }
 }
 
-const handlePayment = async () => {
-  if (!currentOrderId.value) return
-  
+onMounted(() => {
+  fetchOrders()
+})
+
+const openPay = (order) => {
+  currentPaymentOrder.value = order
+  showPaymentModal.value = true
+}
+
+const confirmPay = async () => {
+  if (!currentPaymentOrder.value) return
   try {
-    const res = await payOrder(currentOrderId.value)
+    const res = await payOrder(currentPaymentOrder.value.orderId)
     if (res.code === 200) {
-      alert('支付成功！订单已提交，请等待管理员审核。')
       showPaymentModal.value = false
-      router.push('/student/trips')
+      alert('支付成功')
+      currentPaymentOrder.value.isPaid = true
+      fetchOrders()
     } else {
       alert(res.message || '支付失败')
     }
   } catch (e) {
     console.error(e)
-    if (e && e.message) {
-      alert(e.message)
-    } else {
-      alert('支付异常')
+    alert((e && e.message) || '支付异常')
+  }
+}
+
+watch(() => route.query.refresh, (newVal) => {
+  if (newVal) {
+    fetchOrders()
+  }
+})
+
+const statusClass = (status) => {
+  if (status === '已通过') return 'status-approved'
+  if (status === '已拒绝') return 'status-rejected'
+  if (status === '已退票') return 'status-refunded'
+  return 'status-pending'
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString()
+}
+
+const formatTimeRange = (startTime, endTime) => {
+  if (!startTime || !endTime) return ''
+  try {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const month = start.getMonth() + 1
+    const day = start.getDate()
+    const startHour = String(start.getHours()).padStart(2, '0')
+    const startMinute = String(start.getMinutes()).padStart(2, '0')
+    const endHour = String(end.getHours()).padStart(2, '0')
+    const endMinute = String(end.getMinutes()).padStart(2, '0')
+    return `${month}月${day}日 ${startHour}:${startMinute}-${endHour}:${endMinute}`
+  } catch (e) {
+    return ''
+  }
+}
+
+const copyInvitationCode = (code) => {
+  navigator.clipboard.writeText(code).then(() => {
+    alert('邀请码已复制到剪贴板')
+  }).catch(() => {
+    alert('复制失败，请手动复制')
+  })
+}
+
+const handleCancelOrder = async (id) => {
+  if(confirm('确定要取消吗？')) {
+    try {
+        const res = await cancelOrder(id)
+        if (res.code === 200) {
+            fetchOrders()
+        } else {
+            alert(res.message)
+        }
+    } catch (e) {
+        alert('取消失败')
     }
+  }
+}
+
+const handleDeleteOrder = async (id) => {
+  if(confirm('确定要删除该已拒绝订单吗？')) {
+    try {
+        const res = await deleteOrder(id)
+        if (res.code === 200) {
+            fetchOrders()
+        } else {
+            alert(res.message)
+        }
+    } catch (e) {
+        alert((e && e.message) || '删除失败')
+    }
+  }
+}
+
+// 申请人退票（影响所有人）
+const handleRefundOrder = async (id) => {
+  if(confirm('确定要申请退票吗？此操作将退掉该邀请码下所有学生的订单')) {
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+        const res = await refundOrder(id, userInfo.studentId)
+        if (res.code === 200) {
+            alert('退票成功')
+            fetchOrders()
+        } else {
+            alert(res.message || '退票失败')
+        }
+    } catch (e) {
+        alert((e && e.message) || '退票失败')
+    }
+  }
+}
+
+// 【新增】乘客退出包车（仅移除自己）
+const handleQuitOrder = async (order) => {
+  if(!confirm('确定要退出该包车吗？退出后您将无法查看此订单。')) return
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    const res = await leaveOrder(order.orderId, userInfo.studentId)
+    if (res.code === 200) {
+      alert('已退出包车')
+      fetchOrders()
+    } else {
+      alert(res.message || '退出失败')
+    }
+  } catch (e) {
+    if (e && e.message) alert(e.message)
+    else alert('退出失败')
   }
 }
 
 const cancelPayment = () => {
   showPaymentModal.value = false
-  alert('已取消支付')
-  router.push('/student/trips')
+}
+
+const formatDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return ''
+  try {
+    const s = new Date(startTime)
+    const e = new Date(endTime)
+    const diff = e - s
+    const minutes = Math.floor(diff / 60000)
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    if (m === 0) return `${h}小时`
+    return `${h}小时${m}分钟`
+  } catch (e) {
+    return ''
+  }
 }
 </script>
 
@@ -380,30 +359,19 @@ const cancelPayment = () => {
 .page-container {
   padding: 24px;
   width: 100%;
-  overflow: hidden;
   box-sizing: border-box;
 }
-/* --- 统一设置字体大小 --- */
-.form-group input, 
-.form-group select, 
-.time-input {
-  font-size: 14px; /* 统一字体大小 */
-}
-
-
 
 .header-row {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
   align-items: flex-start;
   margin-bottom: 24px;
 }
 
 .page-title {
-  margin: 12px 0 10px;
-  color: #f8fafc;
-  font-size: 36px;
+  margin: 0 0 8px;
+  font-size: 32px;
   font-weight: 900;
   background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
@@ -414,209 +382,28 @@ const cancelPayment = () => {
 
 .subhead {
   color: #94a3b8;
-  font-size: 15px;
-  line-height: 1.6;
   margin: 0;
-  font-weight: 400;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.4);
-  border-radius: 24px;
-  color: #22d3ee;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin: 0 0 8px;
-  backdrop-filter: blur(8px);
-}
-
-.stat-ribbon {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.stat {
-  padding: 16px 12px;
-  border-radius: 16px;
-  border: none;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  transition: all 0.3s ease;
-}
-
-.stat:hover {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
-  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.3);
-  transform: translateY(-2px);
-}
-
-.stat-num {
-  display: block;
-  color: #22d3ee;
-  font-weight: 800;
-  font-size: 24px;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  color: #000000;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 18px;
-  width: 100%;
-  max-width: 100%;
-}
-
-.card {
-  padding: 22px;
-  border-radius: 18px;
-  background: rgba(12, 18, 34, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.card-head h3 {
-  margin: 0;
-  color: #f8fafc;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.4);
-  border-radius: 20px;
-  color: #22d3ee;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-}
-
-.badge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22d3ee;
-  animation: pulse-badge 2s infinite;
-}
-
-@keyframes pulse-badge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.badge:hover {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.2);
-}
-
-.apply-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  color: #e2e8f0;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  box-sizing: border-box; 
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.86);
-  color: #f8fafc;
-  outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* 修复自动填充样式 */
-.form-group input:-webkit-autofill,
-.form-group input:-webkit-autofill:hover,
-.form-group input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px rgba(15, 23, 42, 0.86) inset !important;
-  -webkit-text-fill-color: #f8fafc !important;
-  border-color: rgba(34, 211, 238, 0.5) !important;
-}
-
-.form-group input:-webkit-autofill::first-line {
-  color: #f8fafc;
-}
-
-.form-group select {
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 18px;
-  padding-right: 50px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: rgba(34, 211, 238, 0.5);
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
-}
-
-.actions {
-  margin-top: 80px;
+  font-size: 14px;
 }
 
 .btn-primary {
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
   color: #ffffff;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.3);
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
 }
 
 .btn-primary::before {
@@ -632,7 +419,7 @@ const cancelPayment = () => {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.4);
 }
 
 .btn-primary:hover::before {
@@ -643,295 +430,257 @@ const cancelPayment = () => {
   transform: translateY(0);
 }
 
-.card-side h4 {
-  color: #f8fafc;
-  margin: 0 0 10px;
+.icon-plus {
+  font-size: 18px;
+  line-height: 1;
 }
 
-.tips {
-  color: var(--text-secondary);
-  padding-left: 18px;
-  color: #fff; 
-  margin: 0 0 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mini-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-
-.mini {
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-.tag {
-  display: inline-flex;
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  color: #22d3ee;
-  font-size: 10px;
-  margin-bottom: 3px;
-}
-
-@media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.time-picker-container {
-  position: relative;
-}
-
-.time-input {
-  width: 100%;
-  padding: 12px 14px;
-  box-sizing: border-box; 
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.86);
-  color: #f8fafc;
+.btn-pay-small {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
   transition: all 0.2s ease;
 }
 
-.time-input:hover {
-  border-color: rgba(34, 211, 238, 0.5);
-  background: rgba(15, 23, 42, 0.95);
+.btn-pay-small:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  filter: brightness(1.1);
 }
 
-.time-input:focus {
-  border-color: rgba(34, 211, 238, 0.5);
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+.btn-danger-ghost {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.time-display {
-  color: #f8fafc;
+.btn-danger-ghost:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #fca5a5;
 }
 
-.time-placeholder {
-  color: #64748b;
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-top: 40px;
 }
 
-.time-icon {
-  width: 20px;
-  height: 20px;
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
   color: #94a3b8;
-  flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
-.time-picker-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
+.btn-apply {
+  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+  border: none;
+  color: #ffffff;
+  padding: 12px 28px;
+  border-radius: 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.3);
+}
+
+.btn-apply:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.4);
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.order-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   padding: 20px;
-  box-sizing: border-box;
-  overflow: auto;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.time-picker-content {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  max-width: 380px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
-  max-height: 90vh;
-  overflow-y: auto;
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.time-picker-header {
+.status-approved { border-left: 4px solid #10b981; }
+.status-rejected { border-left: 4px solid #ef4444; }
+.status-refunded { border-left: 4px solid #8b5cf6; }
+.status-pending { border-left: 4px solid #f59e0b; }
+
+.card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.time-picker-header h3 {
-  margin: 0;
-  color: #f8fafc;
-  font-size: 18px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 28px;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
+.status-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.close-btn:hover {
+.status-approved .status-badge { color: #34d399; background: rgba(16, 185, 129, 0.1); }
+.status-rejected .status-badge { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+.status-refunded .status-badge { color: #a78bfa; background: rgba(139, 92, 246, 0.1); }
+.status-pending .status-badge { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.date {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.card-body {
+  flex: 1;
+}
+
+.destination {
+  margin: 0 0 16px;
   color: #f8fafc;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
-.time-picker-body {
+.info-row {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.date-section,
-.time-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.time-section {
-  display: grid;
-  gap: 12px;
-}
-
-/* 两列布局：一列时，一列分；每个时间（开始/结束）占一行 */
-.time-grid {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.time-grid-col {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.time-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.date-section label,
-.time-item label {
-  color: #e2e8f0;
+  justify-content: space-between;
+  margin-bottom: 8px;
   font-size: 14px;
+  align-items: center;
+}
+
+.label {
+  color: #94a3b8;
+}
+
+.value {
+  color: #e2e8f0;
+  text-align: right;
+  flex: 1;
   font-weight: 500;
 }
 
-.date-section input,
-.time-item input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.2);
-  color: #f8fafc;
-  font-size: 14px;
+.highlight-price {
+  color: #22d3ee;
+  font-weight: 700;
+  font-size: 16px;
 }
 
-/* 修复日期和时间输入框的图标颜色 */
-.date-section input[type="date"]::-webkit-calendar-picker-indicator,
-.time-item input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: brightness(0) invert(1);
-  cursor: pointer;
-}
+.value.paid { color: #34d399; }
+.value.unpaid { color: #f87171; }
 
-.date-section input[type="date"],
-.time-item input[type="time"] {
-  color-scheme: dark;
-}
-
-.date-section input:focus,
-.time-item input:focus,
-.time-select:focus {
-  outline: none;
-  border-color: rgba(34, 211, 238, 0.5);
-  background: rgba(34, 211, 238, 0.1);
-}
-
-.time-select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: #0f172a; /* 暗黑背景 */
-  color: #ffffff; /* 白字 */
-  font-size: 14px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
-}
-
-.time-select option {
-  background: #0f172a;
-  color: #ffffff;
-}
-
-/* 某些浏览器在展开下拉时需要这个样式以确保项为暗色 */
-.time-select::-ms-expand { display: none; }
-.time-select:focus {
-  background: #0b1220;
-  color: #ffffff;
-}
-
-.time-picker-footer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.btn-cancel,
-.btn-confirm {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
+.invitation-code {
+  color: #60a5fa;
   font-weight: 600;
   cursor: pointer;
+  padding: 2px 6px;
+  background: rgba(96, 165, 250, 0.1);
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-.btn-cancel {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
+.invitation-code:hover {
+  background: rgba(96, 165, 250, 0.2);
+  color: #93c5fd;
 }
 
-.btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.12);
+.approved-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
 }
 
-.btn-confirm {
-  background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.detail-row:last-child { margin-bottom: 0; }
+
+.d-label { color: #6ee7b7; }
+.d-value { color: #ecfdf5; font-weight: 500; }
+.highlight { font-weight: bold; color: #34d399; }
+
+.reject-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
-/* 支付弹窗样式 */
+.reject-reason {
+  margin: 0;
+  font-size: 13px;
+  color: #fca5a5;
+  line-height: 1.4;
+}
+
+.card-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.refund-status {
+  color: #a78bfa;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+}
+
 .payment-modal {
   position: fixed;
   inset: 0;
@@ -1017,32 +766,22 @@ const cancelPayment = () => {
   margin-bottom: 20px;
 }
 
-.info-row {
+.payment-info .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 0;
 }
 
-.info-row:last-child {
+.payment-info .info-row:last-child {
   border-bottom: none;
 }
 
-.info-row .label {
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.info-row .value {
-  color: #e2e8f0;
-  font-size: 14px;
-  font-weight: 500;
-}
-
 .price-row {
-  padding-top: 16px;
-  margin-top: 8px;
+  padding-top: 16px !important;
+  margin-top: 8px !important;
   border-top: 2px solid rgba(34, 211, 238, 0.3) !important;
 }
 
@@ -1107,10 +846,5 @@ const cancelPayment = () => {
 .btn-pay:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(34, 211, 238, 0.5);
-}
-
-.btn-confirm:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(34, 211, 238, 0.4);
 }
 </style>
