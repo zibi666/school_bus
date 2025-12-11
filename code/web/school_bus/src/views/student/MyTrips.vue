@@ -5,9 +5,13 @@
         <h2 class="page-title">我的订单</h2>
         <p class="subhead">查看您的包车申请记录与审核状态。</p>
       </div>
-      <button class="btn-primary btn-new" @click="$router.push('/student/charter')">
-        <span class="icon-plus">+</span> 新申请
-      </button>
+      <div style="display:flex; gap:12px; align-items:center">
+        <input v-model="invitationCodeInput" class="invite-input" placeholder="输入邀请码加入" />
+        <button class="btn-apply" @click="handleJoinByCode">加入</button>
+        <button class="btn-primary btn-new" @click="$router.push('/student/charter')">
+          <span class="icon-plus">+</span> 新申请
+        </button>
+      </div>
     </div>
 
     <div v-if="orders.length === 0" class="empty-state">
@@ -98,6 +102,12 @@
           </button>
         </div>
 
+        <div class="card-footer" v-if="order.status === '已通过' && !order.isApplicant">
+          <button class="btn-danger-ghost" @click="handleLeaveOrder(order.orderId)">
+            退出车辆
+          </button>
+        </div>
+
         <div class="card-footer" v-if="order.status === '已拒绝'">
           <button class="btn-danger-ghost" @click="handleDeleteOrder(order.orderId)">
             删除订单
@@ -160,12 +170,15 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 // 请确保这里的 api 引用路径是正确的
-import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder } from '../../api'
+import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder, joinOrderByInvitationCode, leaveOrder } from '../../api'
 
 const route = useRoute()
 const orders = ref([])
 const showPaymentModal = ref(false)
 const currentPaymentOrder = ref(null)
+const invitationCodeInput = ref('')
+const joining = ref(false)
+const leaving = ref(false)
 
 const fetchOrders = async () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
@@ -190,7 +203,7 @@ const fetchOrders = async () => {
       }
       orders.value = list.reverse() // Show newest first
       // ensure boolean flags are normalized
-      orders.value.forEach(o => { o.isPaid = !!o.isPaid })
+      orders.value.forEach(o => { o.isPaid = !!o.isPaid; o.isApplicant = !!o.isApplicant })
     }
   } catch (e) {
     console.error(e)
@@ -325,6 +338,49 @@ const handleRefundOrder = async (id) => {
             alert('退票失败')
         }
     }
+  }
+}
+
+const handleJoinByCode = async () => {
+  if (!invitationCodeInput.value) return alert('请输入邀请码')
+  if (joining.value) return
+  joining.value = true
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    if (!userInfo.studentId) return alert('请先登录')
+    const res = await joinOrderByInvitationCode(invitationCodeInput.value.trim(), userInfo.studentId)
+    if (res.code === 200) {
+      alert('加入成功')
+      invitationCodeInput.value = ''
+      fetchOrders()
+    } else {
+      alert(res.message || '加入失败')
+    }
+  } catch (e) {
+    alert((e && e.message) || '加入失败')
+  } finally {
+    joining.value = false
+  }
+}
+
+const handleLeaveOrder = async (orderId) => {
+  if (!confirm('确定要退出该包车吗？')) return
+  if (leaving.value) return
+  leaving.value = true
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    if (!userInfo.studentId) return alert('请先登录')
+    const res = await leaveOrder(orderId, userInfo.studentId)
+    if (res.code === 200) {
+      alert('已退出包车')
+      fetchOrders()
+    } else {
+      alert(res.message || '退出失败')
+    }
+  } catch (e) {
+    alert((e && e.message) || '退出失败')
+  } finally {
+    leaving.value = false
   }
 }
 
@@ -503,6 +559,20 @@ const formatDuration = (startTime, endTime) => {
   align-items: center;
   gap: 10px;
   box-shadow: 0 4px 16px rgba(34, 211, 238, 0.3);
+}
+
+.invite-input {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: 180px;
+  outline: none;
+}
+
+.invite-input::placeholder {
+  color: #94a3b8;
 }
 
 .btn-apply:hover {

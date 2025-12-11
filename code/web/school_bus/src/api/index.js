@@ -35,6 +35,7 @@ export const payOrder = (orderId) => api.post(`/student/order/pay/${orderId}`)
 export const getOrderByInvitationCode = (invitationCode) => api.get(`/student/order/by-invitation-code/${invitationCode}`)
 export const joinOrderByInvitationCode = (invitationCode, studentId) => api.post(`/student/order/join-by-invitation-code/${invitationCode}`, null, { params: { studentId } })
 export const refundOrder = (orderId, studentId) => api.post(`/student/order/refund/${orderId}`, null, { params: { studentId } })
+export const leaveOrder = (orderId, studentId) => api.post(`/student/order/leave/${orderId}`, null, { params: { studentId } })
 
 // Admin
 export const getAllOrders = () => api.get('/admin/orders')

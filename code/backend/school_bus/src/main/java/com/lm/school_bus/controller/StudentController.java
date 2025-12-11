@@ -153,4 +153,16 @@ public class StudentController {
         studentService.refundOrder(orderId, studentId);
         return ApiResponse.success("退票成功", null);
     }
+
+    /**
+     * 退出通过邀请码加入的订单（仅允许加入者本人退出）
+     */
+    @PostMapping("/order/leave/{orderId}")
+    public ApiResponse<Void> leaveOrder(@PathVariable Integer orderId, @RequestParam String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            return ApiResponse.error(401, "请先登录");
+        }
+        studentService.leaveJoinedOrder(orderId, studentId);
+        return ApiResponse.success("已退出包车", null);
+    }
 }
