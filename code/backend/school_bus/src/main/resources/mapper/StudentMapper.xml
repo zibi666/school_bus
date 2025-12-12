@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 学生表 Mapper - 处理学生的注册、登录、信息更新等操作 -->
 <mapper namespace="com.lm.school_bus.mapper.StudentMapper">
 
+    <!-- 学生基础结果映射：数据库表 student_info 与 Student 对象的字段映射 -->
     <resultMap id="BaseResultMap" type="com.lm.school_bus.entity.Student">
         <id column="student_id" property="studentId" />
         <result column="name" property="name" />
@@ -11,19 +13,23 @@
         <result column="location" property="location" />
     </resultMap>
 
+    <!-- 根据学号查询学生信息（用于登录验证和获取学生资料） -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT * FROM student_info WHERE student_id = #{studentId}
     </select>
 
+    <!-- 注册新学生（插入学生账户信息） -->
     <insert id="insert">
         INSERT INTO student_info (student_id, name, password, location)
         VALUES (#{studentId}, #{name}, #{password}, #{location})
     </insert>
 
+    <!-- 检查学号是否已存在（用于注册时验证是否重复） -->
     <select id="countById" resultType="int">
         SELECT COUNT(*) FROM student_info WHERE student_id = #{studentId}
     </select>
 
+    <!-- 更新学生信息（支持有选择地更新字段） -->
     <update id="updateById">
         UPDATE student_info
         <set>

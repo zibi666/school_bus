@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 订单表 Mapper - 处理订单的增删改查、邀请码管理等核心业务操作 -->
 <mapper namespace="com.lm.school_bus.mapper.OrderMapper">
 
+    <!-- 订单基础结果映射：数据库表 t_order 与 Order 对象的字段映射 -->
     <resultMap id="BaseResultMap" type="com.lm.school_bus.entity.Order">
         <id column="order_id" property="orderId" />
         <result column="student_id" property="studentId" />
@@ -18,10 +20,9 @@
         <result column="is_paid" property="isPaid" />
         <result column="invitation_code" property="invitationCode" />
         <result column="is_applicant" property="isApplicant" />
-        <!-- Association for Bus details if needed, but for now we just map fields -->
     </resultMap>
     
-    <!-- Result map with Bus details -->
+    <!-- 订单关联车辆的结果映射：在 Order 对象中包含关联的 Bus 对象信息 -->
     <resultMap id="OrderWithBusResultMap" type="com.lm.school_bus.entity.Order" extends="BaseResultMap">
         <association property="bus" javaType="com.lm.school_bus.entity.Bus">
             <id column="b_bus_id" property="busId"/>
@@ -33,10 +34,12 @@
         </association>
     </resultMap>
 
+    <!-- 订单表所有列的通用 SQL 片段，用于 DRY 原则减少重复 -->
     <sql id="Base_Column_List">
         order_id, student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code, is_applicant
     </sql>
 
+    <!-- 根据订单状态查询订单，按开始时间倒序排列（管理员订单审核列表） -->
     <select id="selectByStatusOrderByCreateTimeDesc" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM t_order
@@ -44,23 +47,27 @@
         ORDER BY start_time DESC, order_id DESC
     </select>
 
+    <!-- 查询所有订单，按开始时间倒序排列（管理员订单管理列表） -->
     <select id="selectAllOrderByCreateTimeDesc" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM t_order
         ORDER BY start_time DESC, order_id DESC
     </select>
 
+    <!-- 根据订单 ID 查询订单详情 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM t_order
         WHERE order_id = #{orderId}
     </select>
 
+    <!-- 创建新订单，自动生成订单 ID -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="orderId">
         INSERT INTO t_order (student_id, destination, start_time, end_time, requested_car_type, bus_id, price, status, reject_reason, is_paid, invitation_code, is_applicant)
         VALUES (#{studentId}, #{destination}, #{startTime}, #{endTime}, #{requestedCarType}, #{busId}, #{price}, #{status}, #{rejectReason}, #{isPaid}, #{invitationCode}, #{isApplicant})
     </insert>
 
+    <!-- 更新订单信息 -->
     <update id="update">
         UPDATE t_order
         SET student_id = #{studentId},
@@ -78,10 +85,12 @@
         WHERE order_id = #{orderId}
     </update>
 
+    <!-- 删除订单 -->
     <delete id="deleteById">
         DELETE FROM t_order WHERE order_id = #{orderId}
     </delete>
 
+    <!-- 查询学生的所有订单（关联车辆信息），按开始时间倒序排列 -->
     <select id="selectByStudentIdOrderByCreateTimeDesc" resultMap="OrderWithBusResultMap">
         SELECT 
             o.*,
@@ -92,12 +101,14 @@
         ORDER BY o.start_time DESC, o.order_id DESC
     </select>
 
+    <!-- 查询与指定车辆关联的所有订单（管理员删除车辆时检查是否有相关订单） -->
     <select id="selectByBusId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM t_order
         WHERE bus_id = #{busId}
     </select>
 
+    <!-- 根据邀请码查询订单并关联车辆信息（学生通过邀请码加入订单时查询原订单） -->
     <select id="selectByInvitationCode" resultMap="OrderWithBusResultMap">
         SELECT 
             o.*,
@@ -107,7 +118,9 @@
         WHERE o.invitation_code = #{invitationCode}
     </select>
 
-    <!-- 检查指定学生是否已经加入过某个订单（通过邀请码加入会创建新订单记录，此查询检查是否重复加入） -->
+    <!-- 检查指定学生是否已经加入过某个订单
+         查询条件：相同的车辆、相同的时间段、非申请人、已通过状态
+         用于防止学生重复加入同一订单 -->
     <select id="selectExistingJoinedOrder" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM t_order o
@@ -125,7 +138,9 @@
           AND o.status = '已通过'
     </select>
 
-    <!-- 检查车辆在指定时间段内是否有已通过的订单（时间冲突检查） -->
+    <!-- 检查车辆在指定时间段内是否有时间冲突
+         统计在该时间段内已分配给该车辆的已通过订单数
+         用于管理员分配车辆时验证是否有时间冲突 -->
     <select id="checkTimeConflict" resultType="int">
         SELECT COUNT(*) FROM t_order
         WHERE bus_id = #{busId}
@@ -139,7 +154,9 @@
           )
     </select>
 
-    <!-- 通过邀请码查询所有订单 -->
+    <!-- 通过邀请码查询所有订单（包括申请人和加入者）
+         同一邀请码下可能有多条订单记录
+         用于申请人查看谁加入了自己的订单 -->
     <select id="selectByInvitationCodeAll" resultMap="OrderWithBusResultMap">
         SELECT 
             o.*,
@@ -149,7 +166,8 @@
         WHERE o.invitation_code = #{invitationCode}
     </select>
 
-    <!-- 批量更新订单状态 -->
+    <!-- 批量更新订单状态（按邀请码）
+         用于申请人退票时，将同邀请码下的所有订单状态更新为"已退票" -->
     <update id="updateStatusByInvitationCode">
         UPDATE t_order
         SET status = #{status}

@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 车辆表 Mapper - 处理车辆的增删改查操作 -->
 <mapper namespace="com.lm.school_bus.mapper.BusMapper">
 
+    <!-- 车辆基础结果映射：数据库表 t_bus 与 Bus 对象的字段映射 -->
     <resultMap id="BaseResultMap" type="com.lm.school_bus.entity.Bus">
         <id column="bus_id" property="busId" />
         <result column="plate_number" property="plateNumber" />
@@ -13,19 +15,23 @@
         <result column="price" property="price" />
     </resultMap>
 
+    <!-- 根据车辆 ID 查询车辆详情 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT * FROM t_bus WHERE bus_id = #{busId}
     </select>
 
+    <!-- 查询所有车辆（管理员车辆管理列表） -->
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT * FROM t_bus
     </select>
 
+    <!-- 添加新车辆，自动生成车辆 ID -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="busId">
         INSERT INTO t_bus (plate_number, car_type, driver_name, number, price)
         VALUES (#{plateNumber}, #{carType}, #{driverName}, #{number}, #{price})
     </insert>
 
+    <!-- 更新车辆信息 -->
     <update id="update">
         UPDATE t_bus
         SET plate_number = #{plateNumber},
@@ -36,14 +42,17 @@
         WHERE bus_id = #{busId}
     </update>
 
+    <!-- 删除车辆 -->
     <delete id="deleteById">
         DELETE FROM t_bus WHERE bus_id = #{busId}
     </delete>
 
+    <!-- 根据车牌号查询车辆（用于校验车牌号是否重复） -->
     <select id="selectByPlateNumber" resultMap="BaseResultMap">
         SELECT * FROM t_bus WHERE plate_number = #{plateNumber}
     </select>
 
+    <!-- 根据车型模糊查询车辆（用于获取指定车型的车辆） -->
     <select id="selectByCarType" resultMap="BaseResultMap">
         SELECT * FROM t_bus WHERE car_type LIKE CONCAT('%', #{carType}, '%')
     </select>

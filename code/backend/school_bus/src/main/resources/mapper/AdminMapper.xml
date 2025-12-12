@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 管理员表 Mapper - 处理管理员登录认证等操作 -->
 <mapper namespace="com.lm.school_bus.mapper.AdminMapper">
 
+    <!-- 管理员基础结果映射：数据库表 admin_info 与 Admin 对象的字段映射 -->
     <resultMap id="BaseResultMap" type="com.lm.school_bus.entity.Admin">
         <id column="admin_id" property="adminId" />
         <result column="account" property="account" />
@@ -11,6 +13,7 @@
         <result column="name" property="name" />
     </resultMap>
 
+    <!-- 根据账户查询管理员信息（用于登录验证） -->
     <select id="selectByAccount" resultMap="BaseResultMap">
         SELECT * FROM admin_info WHERE account = #{account}
     </select>
