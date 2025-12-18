@@ -113,50 +113,46 @@ graph TD
 
 ### 1. 实体关系图 (ER Diagram)
 
-```mermaid
-erDiagram
-    ADMIN_INFO ||--o{ ORDER : "管理员审核订单"
-    STUDENT_INFO ||--o{ ORDER : "学生创建/加入订单"
-    BUS ||--o{ ORDER : "车辆关联订单"
-
-    STUDENT_INFO {
-        string student_id PK "学号"
-        string name "姓名"
-        string password "密码"
-        string location "所在地"
-    }
-
-    ADMIN_INFO {
-        int admin_id PK "管理员ID"
-        string account "账号"
-        string password "密码"
-        string name "姓名"
-    }
-
-    BUS {
-        int bus_id PK "车辆ID"
-        string plate_number UK "车牌号"
-        string car_type "车型"
-        string driver_name "司机姓名"
-        int price "单价/小时"
-        string number "司机电话"
-    }
-
-    ORDER {
-        int order_id PK "订单ID"
-        string student_id FK "申请人学号"
-        string destination "目的地"
-        string requested_car_type "需求车型"
-        int bus_id FK "分配车辆ID"
-        decimal price "订单费用"
-        string status "审核状态"
-        string reject_reason "拒绝原因"
-        boolean is_paid "是否支付"
-        string invitation_code "邀请码★"
-        datetime start_time "出行开始时间"
-        datetime end_time "出行结束时间"
-        boolean is_applicant "是否申请人★"
-    }
+```
+┌─────────────────┐
+│  student_info   │
+├─────────────────┤
+│ student_id (PK) │◄──────┐
+│ name            │       │
+│ password        │       │
+│ location        │       │
+└─────────────────┘       │
+                          │
+                    ┌─────┴──────────┐
+                    │                │
+┌─────────────┐    ┌─────────────┐  │
+│ admin_info  │    │  t_order    │  │ 1对多
+├─────────────┤    ├─────────────┤  │
+│ admin_id(PK)├───►│ order_id(PK)│◄─┘
+│ account(UK) │    │ student_id  │
+│ password    │    │ bus_id      │
+│ name        │    │ status      │
+└─────────────┘    │ price       │
+                   │ invitation_ │
+                   │ code ⭐     │
+                   │ is_applicant│⭐
+                   │ start_time  │
+                   │ end_time    │
+                   └─────▲───────┘
+                         │
+                         │ 1对多
+                   ┌─────┴────────┐
+                   │              │
+              ┌────────────────┐  │
+              │    t_bus       │  │
+              ├────────────────┤  │
+              │ bus_id (PK)    ├──┘
+              │ plate_number   │
+              │ car_type       │
+              │ driver_name    │
+              │ price/hour     │
+              │ number         │
+              └────────────────┘
 ```
 
 ### 2. 系统用例图 (Use Case Diagram)
@@ -209,40 +205,28 @@ graph TB
 ### 3. 订单状态流转图 (State Diagram)
 
 ```mermaid
-stateDiagram-v2
-    [*] --> 审核中
-
-    审核中 --> 已通过: 管理员通过 + 分配车辆
-    审核中 --> 已拒绝: 管理员拒绝<br/>或学生取消
+graph TD
+    Start([开始])
+    Start --> A["🟡 审核中"]
     
-    已通过 --> 已退票: 申请人申请退票<br/>级联更新所有同邀请码订单
-    已通过 --> 已拒绝: 管理员撤销订单<br/>或车辆删除
-
-    已拒绝 --> [*]
-    已退票 --> [*]
-
-    note right of 审核中
-        • 学生可以取消订单
-        • 仅限 is_applicant=1 的订单
-    end
-
-    note right of 已通过
-        • 车辆已分配 bus_id != null
-        • 申请人可申请退票
-        • 加入者无法申请退票
-    end
-
-    note right of 已退票
-        • 级联操作: 所有同邀请码
-          订单都变为已退票
-        • 终结性操作，不可逆转
-    end
-
-    note right of 已拒绝
-        • 管理员拒绝 + 原因记录
-        • 或因车辆删除自动拒绝
-        • 或学生主动取消
-    end
+    A -->|管理员通过 + 分配车辆| B["🟢 已通过"]
+    A -->|管理员拒绝 或 学生取消| C["🔴 已拒绝"]
+    
+    B -->|申请人申请退票 级联更新| D["⚫ 已退票"]
+    B -->|管理员撤销 或 车辆删除| C
+    
+    C --> End([结束])
+    D --> End
+    
+    A -.描述.-> N1["学生可以取消订单<br/>仅限 is_applicant=1"]
+    B -.描述.-> N2["车辆已分配 bus_id != null<br/>申请人可申请退票<br/>加入者无法申请退票"]
+    D -.描述.-> N3["级联操作: 同邀请码所有订单变为已退票<br/>终结性操作，不可逆转"]
+    C -.描述.-> N4["管理员拒绝 + 原因记录<br/>或因车辆删除自动拒绝<br/>或学生主动取消"]
+    
+    style A fill:#FFE082,stroke:#FBC02D,color:#000
+    style B fill:#81C784,stroke:#558B2F,color:#fff
+    style C fill:#E57373,stroke:#C62828,color:#fff
+    style D fill:#424242,stroke:#000,color:#fff
 ```
 
 ### 4. 类图 (Class Diagram) - 核心实体
