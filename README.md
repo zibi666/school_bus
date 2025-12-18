@@ -157,49 +157,41 @@ graph TD
 
 ### 2. 系统用例图 (Use Case Diagram)
 
-```mermaid
-graph TB
-    subgraph 学生["🧑‍🎓 学生用户"]
-        SA["🔐 登录/注册"]
-        SB["📝 创建订单<br/>生成邀请码"]
-        SC["🤝 加入订单<br/>使用邀请码"]
-        SD["💸 支付订单"]
-        SE["📱 查看我的订单"]
-        SF["🔄 申请退票<br/>级联退票"]
-        SG["🚪 离开订单<br/>仅限加入者"]
-        SH["👤 个人资料"]
-    end
+```
+                      ┌──────────────────────────────────────┐
+                      │         🧑‍🎓 学生用户                   │
+                      ├──────────────────────────────────────┤
+                      │ • 🔐 登录/注册                         │
+                      │ • 📝 创建订单 (生成邀请码)             │
+                      │ • 🤝 加入订单 (使用邀请码)             │
+                      │ • 💸 支付订单                          │
+                      │ • 📱 查看我的订单                      │
+                      │ • 🔄 申请退票 (级联)                   │
+                      │ • 🚪 离开订单 (仅加入者)               │
+                      │ • 👤 个人资料                          │
+                      └──────────────────────────────────────┘
 
-    subgraph 管理员["👮 管理员用户"]
-        AA["🔐 管理员登录"]
-        AB["📋 查看订单列表"]
-        AC["✅ 审核通过<br/>分配车辆"]
-        AD["❌ 审核拒绝<br/>记录原因"]
-        AE["🔄 撤销订单<br/>释放车辆"]
-        AF["🚌 车辆管理<br/>增删改查"]
-        AG["⚠️ 时间冲突检查"]
-    end
+                      ┌──────────────────────────────────────┐
+                      │       👮 管理员用户                    │
+                      ├──────────────────────────────────────┤
+                      │ • 🔐 管理员登录                        │
+                      │ • 📋 查看订单列表                      │
+                      │ • ✅ 审核通过 (分配车辆)               │
+                      │ • ❌ 审核拒绝 (记录原因)                │
+                      │ • 🔄 撤销订单 (释放车辆)                │
+                      │ • 🚌 车辆管理 (增删改查)                │
+                      │ • ⚠️  时间冲突检查                     │
+                      └──────────────────────────────────────┘
 
-    subgraph 系统["⚙️ 系统"]
-        B1["邀请码生成"]
-        B2["时间冲突检查"]
-        B3["级联更新"]
-        B4["权限验证"]
-        B5["价格计算"]
-    end
-
-    SA -.->|使用| B4
-    SB -->|触发| B1
-    SB -->|触发| B5
-    SC -->|验证| B1
-    SC -->|触发| B4
-    SF -->|触发| B3
-    SF -->|验证| B4
-    AC -->|验证| B2
-    AC -->|检查| B4
-    AA -.->|使用| B4
-    AB -->|查询| B2
-    AF -->|触发| B3
+                      ┌──────────────────────────────────────┐
+                      │        ⚙️ 系统核心功能                │
+                      ├──────────────────────────────────────┤
+                      │ • 邀请码生成 (8位随机码)              │
+                      │ • 时间冲突检查 (智能派车)              │
+                      │ • 级联更新 (批量操作)                  │
+                      │ • 权限验证 (角色检查)                  │
+                      │ • 价格计算 (时间×单价)                 │
+                      └──────────────────────────────────────┘
 ```
 
 ### 3. 订单状态流转图 (State Diagram)
@@ -229,116 +221,131 @@ graph TD
     style D fill:#424242,stroke:#000,color:#fff
 ```
 
-### 4. 类图 (Class Diagram) - 核心实体
+### 4. 核心实体类关系 (Class Relationship)
 
-```mermaid
-classDiagram
-    class Student {
-        - student_id: String PK
-        - name: String
-        - password: String
-        - location: String
-    }
+```
+┌──────────────────────────┐
+│      Student (学生)       │
+├──────────────────────────┤
+│ - student_id: String PK  │
+│ - name: String           │
+│ - password: String       │
+│ - location: String       │
+└────────┬─────────────────┘
+         │ 1对多
+         │ 创建/加入
+         │
+    ┌────▼──────────────────────────────┐
+    │       Order (订单) ⭐              │
+    ├────────────────────────────────────┤
+    │ - order_id: int PK                │
+    │ - student_id: String FK           │
+    │ - destination: String             │
+    │ - requested_car_type: String      │
+    │ - bus_id: int FK                  │
+    │ - price: decimal                  │
+    │ - status: String                  │
+    │ - invitation_code: String ⭐      │
+    │ - start_time: datetime            │
+    │ - end_time: datetime              │
+    │ - is_applicant: boolean ⭐        │
+    │                                   │
+    │ + createOrder()                   │
+    │ + joinByCode()                    │
+    │ + refund()                        │
+    │ + leaveOrder()                    │
+    └─┬────────────────────────────┬────┘
+      │ 1对多 (分配车辆)           │ 多对1 (管理员审核)
+      │                            │
+    ┌─▼────────────────────┐  ┌────▼──────────────────┐
+    │   Bus (车辆)          │  │   Admin (管理员)      │
+    ├─────────────────────┤  ├─────────────────────┤
+    │ - bus_id: int PK    │  │ - admin_id: int PK │
+    │ - plate_number: Str │  │ - account: String  │
+    │ - car_type: String  │  │ - password: String │
+    │ - driver_name: Str  │  │ - name: String     │
+    │ - price: int        │  └────────────────────┘
+    │ - number: String    │
+    └─────────────────────┘
 
-    class Admin {
-        - admin_id: int PK
-        - account: String UK
-        - password: String
-        - name: String
-    }
-
-    class Bus {
-        - bus_id: int PK
-        - plate_number: String UK
-        - car_type: String
-        - driver_name: String
-        - price: int
-        - number: String
-    }
-
-    class Order {
-        - order_id: int PK
-        - student_id: String FK
-        - destination: String
-        - requested_car_type: String
-        - bus_id: int FK
-        - price: decimal
-        - status: String
-        - reject_reason: String
-        - is_paid: boolean
-        - invitation_code: String ⭐
-        - start_time: datetime
-        - end_time: datetime
-        - is_applicant: boolean ⭐
-        + createOrder()
-        + joinByCode()
-        + refund()
-        + leaveOrder()
-    }
-
-    class ApiResponse {
-        - code: int
-        - message: String
-        - data: Object
-        + success(data)
-        + error(code, message)
-    }
-
-    Student "1" --> "*" Order: 创建或加入
-    Admin "1" --> "*" Order: 审核
-    Bus "1" --> "*" Order: 分配
-    Order --> ApiResponse: 返回
-
-    note "⭐ 邀请码系统的关键字段"
-    note "is_applicant: 1=申请人, 0=加入者"
+API 返回格式统一：
+┌─────────────────────────────┐
+│    ApiResponse<T>           │
+├─────────────────────────────┤
+│ - code: int (200/400/401...) │
+│ - message: String           │
+│ - data: T (泛型数据)         │
+│                             │
+│ + success(data)             │
+│ + error(code, message)      │
+└─────────────────────────────┘
 ```
 
-### 5. 数据库表关系图
+### 5. 数据库表关系
 
-```mermaid
-graph TB
-    subgraph 用户管理
-        SI["student_info<br/>学生表"]
-        AI["admin_info<br/>管理员表"]
-    end
+```
+用户管理                           业务数据
+┌─────────────────┐               ┌──────────────┐
+│ student_info    │               │  t_order     │◄─── ⭐ 核心表
+│ 学生表          │◄──┐           │  订单表       │
+└─────────────────┘   │           │              │
+                      ├──→ 外键 ──→├──────────────┤
+┌─────────────────┐   │           │ 关键字段:     │
+│ admin_info      │◄──┘           │ • invitation_│
+│ 管理员表        │               │   code (邀请码)
+└─────────────────┘               │ • is_applic- │
+                                  │   ant (身份)  │
+                                  └──────────────┘
+                                        ▲
+                                        │ 1对多
+                                        │ (同邀请码)
+                                        │
+                      ┌──────────────┐
+                      │  t_bus       │
+                      │  车辆表      │
+                      └──────────────┘
 
-    subgraph 业务数据
-        TO["t_order<br/>订单表<br/>⭐ 核心表"]
-        TB["t_bus<br/>车辆表"]
-    end
-
-    SI -->|student_id| TO
-    AI -->|管理员ID| TO
-    TB -->|bus_id| TO
-
-    TO -->|1对多关系| TO
-
-    TO -->|邀请码<br/>多个订单<br/>同一邀请码| TO
-
-    style TO fill:#ff9999
-    style SI fill:#99ccff
-    style AI fill:#99ccff
-    style TB fill:#99ff99
+重要索引：
+• idx_order_bus_time (bus_id, start_time, end_time, status)
+  └─ 用于: 时间冲突检查
+  
+• idx_invitation_code_status (invitation_code, status)
+  └─ 用于: 邀请码查询、级联更新
 ```
 
-### 6. 时间冲突检查流程图
+### 6. 时间冲突检查流程
 
-```mermaid
-graph TD
-    A["管理员选择车辆并点击审核"] --> B["系统检查冲突"]
-    B --> C{查询该车辆<br/>在时间段内的<br/>已通过订单}
-    
-    C -->|0条冲突订单| D["✅ 无冲突"]
-    D --> E["分配成功"]
-    
-    C -->|≥1条冲突订单| F["❌ 时间冲突"]
-    F --> G["提示管理员<br/>选择其他车辆"]
-    
-    H["使用索引优化查询<br/>idx_order_bus_time<br/>bus_id, start_time, end_time, status"] -.->|性能保证| B
+```
+┌────────────────────────────────────────┐
+│ 管理员选择车辆并点击【审核通过】        │
+└──────────────┬─────────────────────────┘
+               │
+               ▼
+┌────────────────────────────────────────┐
+│ 系统查询该车辆在指定时间段内的订单      │
+│ SQL: SELECT COUNT(*) FROM t_order      │
+│ WHERE bus_id = ? AND status = '已通过'  │
+│   AND start_time < ? AND end_time > ?  │
+└──────────────┬─────────────────────────┘
+               │
+        ┌──────┴──────┐
+        │             │
+        ▼             ▼
+   ┌─────────┐   ┌───────────┐
+   │ 0条冲突 │   │ ≥1条冲突  │
+   └────┬────┘   └─────┬─────┘
+        │              │
+        ▼              ▼
+   ┌─────────┐   ┌──────────────┐
+   │ ✅无冲突 │   │ ❌ 时间冲突   │
+   │分配成功  │   │提示管理员选择 │
+   └─────────┘   │其他车辆      │
+                 └──────────────┘
 
-    style E fill:#90EE90
-    style F fill:#FFB6C1
-    style H fill:#FFFFCC
+性能优化:
+• 使用复合索引 idx_order_bus_time
+• 快速定位冲突订单
+• 避免全表扫描
 ```
 
 ---
