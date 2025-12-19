@@ -14,7 +14,12 @@
       </div>
     </div>
 
-    <div v-if="orders.length === 0" class="empty-state">
+    <!-- Skeleton Loading -->
+    <div v-if="loading" class="orders-grid">
+      <SkeletonCard v-for="i in 6" :key="i" />
+    </div>
+
+    <div v-else-if="orders.length === 0" class="empty-state">
       <div class="empty-icon">📂</div>
       <p>暂无申请记录</p>
       <button class="btn-apply" @click="$router.push('/student/charter')">
@@ -171,9 +176,15 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 // 请确保这里的 api 引用路径是正确的
 import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder, joinOrderByInvitationCode, leaveOrder } from '../../api'
+// LoadingSpinner 已被 SkeletonCard 替代，不再需要导入
+import SkeletonCard from '../../components/SkeletonCard.vue'
+
+// 简单的内存缓存，避免重复加载骨架屏
+let cachedOrders = []
 
 const route = useRoute()
-const orders = ref([])
+const orders = ref(cachedOrders)
+const loading = ref(cachedOrders.length === 0) // 如果有缓存数据，默认不显示骨架屏
 const showPaymentModal = ref(false)
 const currentPaymentOrder = ref(null)
 const invitationCodeInput = ref('')
@@ -181,8 +192,16 @@ const joining = ref(false)
 const leaving = ref(false)
 
 const fetchOrders = async () => {
+  // 仅当没有数据时才显示加载状态
+  if (orders.value.length === 0) {
+    loading.value = true
+  }
+  
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-  if (!userInfo.studentId) return
+  if (!userInfo.studentId) {
+    loading.value = false
+    return
+  }
   
   try {
     const res = await getMyOrders(userInfo.studentId)
@@ -204,9 +223,14 @@ const fetchOrders = async () => {
       orders.value = list.reverse() // Show newest first
       // ensure boolean flags are normalized
       orders.value.forEach(o => { o.isPaid = !!o.isPaid; o.isApplicant = !!o.isApplicant })
+      
+      // 更新缓存
+      cachedOrders = orders.value
     }
   } catch (e) {
     console.error(e)
+  } finally {
+    loading.value = false
   }
 }
 

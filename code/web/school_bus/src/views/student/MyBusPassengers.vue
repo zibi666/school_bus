@@ -5,10 +5,9 @@
       <p class="subhead">查看您申请的车辆及乘客信息</p>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <div class="loader"></div>
-      <p>正在加载车辆信息...</p>
+    <!-- Loading State with Skeleton -->
+    <div v-if="loading" class="skeleton-list">
+      <SkeletonBusTrip v-for="i in 2" :key="i" />
     </div>
 
     <!-- Empty State -->
@@ -139,6 +138,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { getMyOrders, getBus, getTripPassengers } from '../../api'
 import { useRouter } from 'vue-router'
+import SkeletonBusTrip from '../../components/SkeletonBusTrip.vue'
 
 const router = useRouter()
 const loading = ref(true)
@@ -634,28 +634,31 @@ onUnmounted(() => {
   margin-bottom: 16px;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12); /* 边框稍微提亮 */
+  background: rgba(15, 23, 42, 0.6); /* 背景加深 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.03);
+  padding: 18px 24px; /* 增加内边距 */
+  background: rgba(30, 41, 59, 0.7); /* 默认背景色加深 */
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  border-bottom: 1px solid transparent;
 }
 
 .group-header:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(51, 65, 85, 0.8); /* 悬停颜色更明显 */
 }
 
 .group-header.active {
-  background: rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(30, 41, 59, 0.95); /* 展开状态背景更深，接近不透明 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); /* 增加阴影增强层次感 */
 }
 
 .group-title {
@@ -665,38 +668,52 @@ onUnmounted(() => {
 }
 
 .group-icon {
-  font-size: 18px;
+  font-size: 20px; /* 图标稍微放大 */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .group-title .label {
   font-weight: 700;
-  font-size: 16px;
-  color: #f8fafc;
+  font-size: 17px; /* 字体加大 */
+  color: #ffffff; /* 纯白字体增强对比度 */
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* 增加文字阴影 */
 }
 
 .group-title .count {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.15); /* 背景色加深 */
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 13px;
+  color: #e2e8f0; /* 颜色更亮 */
+  font-weight: 600;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .group-title .desc {
   font-size: 13px;
-  color: #64748b;
+  color: #94a3b8; /* 描述文字保持柔和但稍微提亮 */
   margin-left: 8px;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .chevron {
-  color: #94a3b8;
-  font-size: 12px;
-  transition: transform 0.3s ease;
+  color: #cbd5e1; /* 箭头颜色提亮 */
+  font-size: 14px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.1);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .chevron.rotated {
   transform: rotate(180deg);
+  background: rgba(255, 255, 255, 0.2); /* 展开状态下箭头背景更亮 */
+  color: #fff;
 }
 
 .group-body {
@@ -722,5 +739,11 @@ onUnmounted(() => {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 </style>
