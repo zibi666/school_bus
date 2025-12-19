@@ -195,6 +195,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createOrder, calculateOrderPrice, payOrder } from '../../api' 
+import LoadingSpinner from '../../components/LoadingSpinner.vue'
 
 const router = useRouter()
 const loading = ref(false)

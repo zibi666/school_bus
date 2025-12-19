@@ -100,8 +100,10 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { registerStudent } from '../api'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const router = useRouter()
+const loading = ref(false)
 
 const studentForm = reactive({
   studentId: '',
@@ -115,6 +117,7 @@ const handleStudentRegister = async () => {
     alert('请填写完整信息')
     return
   }
+  loading.value = true
   try {
     const res = await registerStudent(studentForm)
     if (res.code === 200) {
@@ -128,6 +131,8 @@ const handleStudentRegister = async () => {
   } catch (error) {
     console.error(error)
     alert('注册异常')
+  } finally {
+    loading.value = false
   }
 }
 </script>

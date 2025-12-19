@@ -230,16 +230,38 @@ src/
 │   │   ├── Layout.vue     # 学生布局
 │   │   ├── Charter.vue    # 包车申请
 │   │   ├── MyTrips.vue    # 我的行程
+│   │   ├── MyBusPassengers.vue # 发车详情页（乘客列表）
 │   │   └── Profile.vue    # 个人资料
 │   └── admin/
 │       ├── Layout.vue     # 管理员布局
 │       ├── Trips.vue      # 订单管理
 │       └── Drivers.vue    # 车辆管理
 ├── components/            # 通用组件
+│   ├── LoadingSpinner.vue  # [新增] 通用加载动画（支持全屏/内联）
+│   ├── SkeletonCard.vue    # [新增] 通用卡片骨架屏
+│   └── SkeletonBusTrip.vue # [新增] 发车详情页专用骨架屏
 ├── assets/                # 静态资源
 ├── App.vue                # 根组件
 └── main.js                # 应用入口
 ```
+
+### 核心组件说明
+
+#### 1. LoadingSpinner.vue
+- **功能**: 提供统一的加载反馈。
+- **Props**: 
+  - `text`: 自定义提示文本。
+  - `fullscreen`: 是否启用全屏遮罩模式。
+- **使用场景**: 所有数据加载过程及表单提交过程。
+
+#### 2. SkeletonCard.vue
+- **功能**: 订单列表页的加载占位符。
+- **特点**: 模拟真实卡片的高度和布局，减少布局偏移 (CLS)。
+
+#### 3. SkeletonBusTrip.vue
+- **功能**: 发车详情页的加载占位符。
+- **特点**: 高度还原发车页面的复杂结构（顶部信息、详情网格、乘客列表），提供极致的加载体验。
+
 
 ### 代码注释说明
 

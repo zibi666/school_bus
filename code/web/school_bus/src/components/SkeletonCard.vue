@@ -31,9 +31,9 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  height: auto; /* Changed from 100% to auto to avoid overflow issues */
-  min-height: 200px;
-  box-sizing: border-box; /* Ensure padding is included in width/height */
+  height: auto;
+  min-height: 240px; /* Adjusted to better match typical order card height */
+  box-sizing: border-box;
 }
 
 .skeleton-shimmer {

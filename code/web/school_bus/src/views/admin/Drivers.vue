@@ -1,5 +1,7 @@
 <template>
   <div class="page-container">
+    <LoadingSpinner :loading="actionLoading" :fullscreen="true" text="处理中..." />
+
     <div class="header-row">
       <div>
         <h2 class="page-title">车辆资源管理</h2>
@@ -46,37 +48,42 @@
     </div>
 
     <div class="grid-container">
-      <div v-for="bus in buses" :key="bus.busId" class="bus-card">
-        <div class="card-top">
-          <div class="bus-icon-box">
-            🚌
+      <template v-if="loading">
+        <SkeletonBusCard v-for="i in 2" :key="`skeleton-${i}`" />
+      </template>
+      <template v-else>
+        <div v-for="bus in buses" :key="bus.busId" class="bus-card">
+          <div class="card-top">
+            <div class="bus-icon-box">
+              🚌
+            </div>
+            <div class="status-badge" :class="getBusStatusClass(bus)">
+              <span class="dot"></span>
+              {{ getBusStatusText(bus) }}
+            </div>
           </div>
-          <div class="status-badge" :class="getBusStatusClass(bus)">
-            <span class="dot"></span>
-            {{ getBusStatusText(bus) }}
+          
+          <div class="bus-info">
+            <h3 class="plate-number">{{ bus.plateNumber }}</h3>
+            <p class="info-row">
+              <span class="label">车型</span>
+              <span class="value">{{ bus.carType }}</span>
+            </p>
+            <p class="info-row">
+              <span class="label">司机</span>
+              <span class="value">{{ bus.driverName }}</span>
+            </p>
+            <p class="info-row">
+              <span class="label">单价</span>
+              <span class="value">¥{{ bus.price }}/小时</span>
+            </p>
           </div>
-        </div>
-        
-        <div class="bus-info">
-          <h3 class="plate-number">{{ bus.plateNumber }}</h3>
-          <p class="info-row">
-            <span class="label">车型</span>
-            <span class="value">{{ bus.carType }}</span>
-          </p>
-          <p class="info-row">
-            <span class="label">司机</span>
-            <span class="value">{{ bus.driverName }}</span>
-          </p>
-          <p class="info-row">
-            <span class="label">单价</span>
-            <span class="value">¥{{ bus.price }}/小时</span>
-          </p>
-        </div>
 
-        <button class="btn-delete-ghost" @click="deleteBus(bus.busId)">
-          删除车辆
-        </button>
-      </div>
+          <button class="btn-delete-ghost" @click="deleteBus(bus.busId)">
+            删除车辆
+          </button>
+        </div>
+      </template>
     </div>
 
     <!-- Add Modal -->
@@ -128,10 +135,14 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { getAllBuses, addBus as addBusApi, deleteBus as deleteBusApi, checkBusAvailability } from '../../api'
+import LoadingSpinner from '../../components/LoadingSpinner.vue'
+import SkeletonBusCard from '../../components/SkeletonBusCard.vue'
 
 const buses = ref([])
 const showAddModal = ref(false)
 const form = reactive({ plateNumber: '', carType: '', driverName: '', number: '' })
+const loading = ref(true)
+const actionLoading = ref(false)
 
 // 根据车型自动获取价格
 const getAutoPrice = (carType) => {
@@ -231,6 +242,7 @@ const getBusStatusText = (bus) => {
 }
 
 const fetchBuses = async () => {
+    loading.value = true
     try {
         const res = await getAllBuses()
         if (res.code === 200) {
@@ -243,6 +255,8 @@ const fetchBuses = async () => {
         }
     } catch (e) {
         console.error(e)
+    } finally {
+        loading.value = false
     }
 }
 
@@ -251,6 +265,7 @@ onMounted(() => {
 })
 
 const addBus = async () => {
+    actionLoading.value = true
     try {
         const res = await addBusApi({
           ...form,
@@ -263,7 +278,7 @@ const addBus = async () => {
             form.carType = ''
             form.driverName = ''
             form.number = ''
-            fetchBuses()
+            await fetchBuses()
         } else {
             // 显示后端返回的具体错误信息
             alert(res.message || '添加失败')
@@ -276,15 +291,18 @@ const addBus = async () => {
         } else {
             alert('添加失败')
         }
+    } finally {
+        actionLoading.value = false
     }
 }
 
 const deleteBus = async (id) => {
     if(confirm('确定要删除吗？')) {
+        actionLoading.value = true
         try {
             const res = await deleteBusApi(id)
             if (res.code === 200) {
-                fetchBuses()
+                await fetchBuses()
             } else {
                 alert(res.message || '删除失败')
             }
@@ -295,6 +313,8 @@ const deleteBus = async (id) => {
             } else {
                 alert('删除失败')
             }
+        } finally {
+            actionLoading.value = false
         }
     }
 }

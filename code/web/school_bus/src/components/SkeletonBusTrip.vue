@@ -35,8 +35,12 @@
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 18px;
-  overflow: hidden;
-  margin-bottom: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 260px; /* Adjusted to better match typical trip card height */
+  box-sizing: border-box;
 }
 
 .skeleton-shimmer {

@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <LoadingSpinner :loading="saving" :fullscreen="true" text="保存中..." />
     <div class="profile-wrapper">
       <div class="profile-card">
         <div class="profile-header">
@@ -78,6 +79,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getStudentProfile, updateStudentProfile } from '../../api'
+import LoadingSpinner from '../../components/LoadingSpinner.vue'
 
 const fallbackProfile = {
   studentId: '2313001044',

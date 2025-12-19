@@ -16,7 +16,7 @@
 
     <!-- Skeleton Loading -->
     <div v-if="loading" class="orders-grid">
-      <SkeletonCard v-for="i in 6" :key="i" />
+      <SkeletonCard v-for="i in 2" :key="i" />
     </div>
 
     <div v-else-if="orders.length === 0" class="empty-state">

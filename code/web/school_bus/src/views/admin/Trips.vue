@@ -1,5 +1,7 @@
 <template>
   <div class="page-container">
+    <LoadingSpinner :loading="actionLoading" :fullscreen="true" text="处理中..." />
+
     <div class="header-row">
       <div>
         <h2 class="page-title">订单审核</h2>
@@ -8,7 +10,14 @@
     </div>
     
     <div class="table-wrapper">
-      <table class="glass-table">
+      <template v-if="loading">
+        <SkeletonTable :rows="8" :columns="7" />
+      </template>
+      <div v-else-if="orders.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>暂无待审核订单</p>
+      </div>
+      <table v-else class="glass-table">
         <thead>
           <tr>
             <th>订单号</th>
@@ -146,7 +155,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getAllOrders, getAllBuses, approveOrder, rejectOrder, revokeOrder } from '../../api'
+import LoadingSpinner from '../../components/LoadingSpinner.vue'
+import SkeletonTable from '../../components/SkeletonTable.vue'
 
+const loading = ref(false)
+const actionLoading = ref(false)
 const orders = ref([])
 const allBuses = ref([])
 const availableBuses = ref([])
@@ -160,6 +173,7 @@ const rejectForm = reactive({ reason: '' })
 const revokeForm = reactive({ reason: '' })
 
 const fetchData = async () => {
+    loading.value = true
     try {
         const res = await getAllOrders()
         if (res.code === 200) {
@@ -183,6 +197,8 @@ const fetchData = async () => {
         }
     } catch (e) {
         console.error(e)
+    } finally {
+        loading.value = false
     }
 }
 
@@ -247,6 +263,7 @@ const confirmApprove = async () => {
         alert('请选择车辆')
         return
     }
+    actionLoading.value = true
     try {
         const res = await approveOrder({
             orderId: currentOrder.value.orderId,
@@ -254,12 +271,14 @@ const confirmApprove = async () => {
         })
         if (res.code === 200) {
             showApproveModal.value = false
-            fetchData()
+            await fetchData() // refresh list
         } else {
             alert(res.message)
         }
     } catch (e) {
         alert('操作失败')
+    } finally {
+        actionLoading.value = false
     }
 }
 
@@ -268,6 +287,7 @@ const confirmReject = async () => {
         alert('请输入拒绝理由')
         return
     }
+    actionLoading.value = true
     try {
         const res = await rejectOrder({
             orderId: currentOrder.value.orderId,
@@ -275,12 +295,14 @@ const confirmReject = async () => {
         })
         if (res.code === 200) {
             showRejectModal.value = false
-            fetchData()
+            await fetchData() // refresh list
         } else {
             alert(res.message)
         }
     } catch (e) {
         alert('操作失败')
+    } finally {
+        actionLoading.value = false
     }
 }
 
@@ -289,6 +311,7 @@ const confirmRevoke = async () => {
         alert('请输入撤销理由')
         return
     }
+    actionLoading.value = true
     try {
         const res = await revokeOrder({
             orderId: currentOrder.value.orderId,
@@ -296,17 +319,34 @@ const confirmRevoke = async () => {
         })
         if (res.code === 200) {
             showRevokeModal.value = false
-            fetchData()
+            await fetchData() // refresh list
         } else {
             alert(res.message)
         }
     } catch (e) {
         alert('操作失败')
+    } finally {
+        actionLoading.value = false
     }
 }
 </script>
 
 <style scoped>
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
 .page-container {
   padding: 24px;
 }
