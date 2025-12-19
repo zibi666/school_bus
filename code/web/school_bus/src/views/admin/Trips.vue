@@ -230,7 +230,16 @@ const fetchData = async () => {
                 }
                 return true
             })
-            orders.value = filtered.reverse()
+            // 排序：审核中的订单排在最前面，其余按订单ID降序排列
+            orders.value = filtered.sort((a, b) => {
+                const aIsPending = a.status === '审核中'
+                const bIsPending = b.status === '审核中'
+                
+                if (aIsPending && !bIsPending) return -1
+                if (!aIsPending && bIsPending) return 1
+                
+                return b.orderId - a.orderId
+            })
             currentPage.value = 1 // Reset to first page on refresh
         }
         
