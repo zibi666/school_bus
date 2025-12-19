@@ -330,6 +330,8 @@ onUnmounted(() => {
   animation: fadeIn 0.5s ease;
   width: 100%;
   box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .page-header {

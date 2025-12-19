@@ -168,15 +168,15 @@ onMounted(async () => {
 <style scoped>
 .page-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 80vh;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .profile-wrapper {
   width: 100%;
   max-width: 400px;
   perspective: 1000px;
+  margin: auto;
 }
 
 .profile-card {

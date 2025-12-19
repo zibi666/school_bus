@@ -381,7 +381,8 @@ const cancelPayment = () => {
 .page-container {
   padding: 24px;
   width: 100%;
-  overflow: hidden;
+  height: 100%;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 /* --- 统一设置字体大小 --- */

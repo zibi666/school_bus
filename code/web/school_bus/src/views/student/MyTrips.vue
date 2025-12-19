@@ -434,6 +434,8 @@ const formatDuration = (startTime, endTime) => {
   padding: 24px; /* 增加内边距 */
   width: 100%;
   box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .header-row {

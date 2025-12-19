@@ -62,9 +62,12 @@ defineProps({
 
 .skeleton-tr {
   display: flex;
-  padding: 16px 20px;
+  padding: 0 20px;
+  height: 60px;
+  align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   gap: 16px;
+  box-sizing: border-box;
 }
 
 .skeleton-tr:last-child {

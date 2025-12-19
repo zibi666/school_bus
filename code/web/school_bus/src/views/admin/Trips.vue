@@ -11,56 +11,80 @@
     
     <div class="table-wrapper">
       <template v-if="loading">
-        <SkeletonTable :rows="8" :columns="7" />
+        <SkeletonTable :rows="pageSize" :columns="7" />
       </template>
       <div v-else-if="orders.length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
         <p>暂无待审核订单</p>
       </div>
-      <table v-else class="glass-table">
-        <thead>
-          <tr>
-            <th>订单号</th>
-            <th>申请人</th>
-            <th>目的地</th>
-            <th>时间段</th>
-            <th>需求车型</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in orders" :key="order.orderId">
-            <td class="font-mono">#{{ order.orderId }}</td>
-            <td>{{ order.studentId }}</td>
-            <td>{{ order.destination }}</td>
-            <td>{{ formatTimeRange(order.startTime, order.endTime) }}</td>
-            <td><span class="car-tag">{{ order.requestedCarType }}</span></td>
-            <td>
-              <span :class="['status-pill', statusClass(order.status)]">
-                <span class="dot"></span>
-                {{ order.status }}
-              </span>
-            </td>
-            <td>
-              <div v-if="order.status === '审核中'" class="actions">
-                <button class="btn-icon-approve" @click="openApprove(order)" title="通过">
-                  ✓
-                </button>
-                <button class="btn-icon-reject" @click="openReject(order)" title="拒绝">
-                  ✕
-                </button>
-              </div>
-              <div v-else-if="order.status === '已通过'" class="actions">
-                <button class="btn-icon-revoke" @click="openRevoke(order)" title="撤销">
-                  ↶
-                </button>
-              </div>
-              <span v-else class="text-gray">-</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="table-content">
+        <table class="glass-table">
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>申请人</th>
+              <th>目的地</th>
+              <th>时间段</th>
+              <th>需求车型</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in paginatedOrders" :key="order.orderId">
+              <td class="font-mono">#{{ order.orderId }}</td>
+              <td>{{ order.studentId }}</td>
+              <td>{{ order.destination }}</td>
+              <td>{{ formatTimeRange(order.startTime, order.endTime) }}</td>
+              <td><span class="car-tag">{{ order.requestedCarType }}</span></td>
+              <td>
+                <span :class="['status-pill', statusClass(order.status)]">
+                  <span class="dot"></span>
+                  {{ order.status }}
+                </span>
+              </td>
+              <td>
+                <div v-if="order.status === '审核中'" class="actions">
+                  <button class="btn-icon-approve" @click="openApprove(order)" title="通过">
+                    ✓
+                  </button>
+                  <button class="btn-icon-reject" @click="openReject(order)" title="拒绝">
+                    ✕
+                  </button>
+                </div>
+                <div v-else-if="order.status === '已通过'" class="actions">
+                  <button class="btn-icon-revoke" @click="openRevoke(order)" title="撤销">
+                    ↶
+                  </button>
+                </div>
+                <span v-else class="text-gray">-</span>
+              </td>
+            </tr>
+            <!-- Fill empty rows to maintain layout stability -->
+            <tr v-for="i in (pageSize - paginatedOrders.length)" :key="`empty-${i}`" class="empty-row">
+              <td colspan="7">&nbsp;</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div class="pagination" v-if="totalPages > 1">
+          <button 
+            class="page-btn" 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+          >
+            ←
+          </button>
+          <span class="page-info">第 {{ currentPage }} 页 / 共 {{ totalPages }} 页</span>
+          <button 
+            class="page-btn" 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+          >
+            →
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Approve Modal -->
@@ -153,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { getAllOrders, getAllBuses, approveOrder, rejectOrder, revokeOrder } from '../../api'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import SkeletonTable from '../../components/SkeletonTable.vue'
@@ -168,9 +192,27 @@ const showRejectModal = ref(false)
 const showRevokeModal = ref(false)
 const currentOrder = ref(null)
 
+// Pagination state
+const currentPage = ref(1)
+const pageSize = ref(8)
+
 const approveForm = reactive({ busId: '' })
 const rejectForm = reactive({ reason: '' })
 const revokeForm = reactive({ reason: '' })
+
+// Pagination computed properties
+const totalPages = computed(() => Math.ceil(orders.value.length / pageSize.value))
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return orders.value.slice(start, end)
+})
+
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
 
 const fetchData = async () => {
     loading.value = true
@@ -189,6 +231,7 @@ const fetchData = async () => {
                 return true
             })
             orders.value = filtered.reverse()
+            currentPage.value = 1 // Reset to first page on refresh
         }
         
         const busRes = await getAllBuses()
@@ -349,10 +392,16 @@ const confirmRevoke = async () => {
 
 .page-container {
   padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .header-row {
   margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -378,12 +427,71 @@ const confirmRevoke = async () => {
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Ensure table has fixed height structure */
+.table-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  justify-content: space-between; /* Push pagination to bottom */
 }
 
 .glass-table {
   width: 100%;
   border-collapse: collapse;
   color: #e2e8f0;
+  flex: 1;
+}
+
+.glass-table tbody tr {
+  height: 60px; /* Strict row height */
+}
+
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: auto;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.page-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .glass-table th {
@@ -403,6 +511,8 @@ const confirmRevoke = async () => {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 14px;
+  height: 60px; /* Fixed height for consistency */
+  box-sizing: border-box;
 }
 
 .glass-table tr:last-child td {
@@ -411,6 +521,14 @@ const confirmRevoke = async () => {
 
 .glass-table tr:hover {
   background: rgba(34, 211, 238, 0.08);
+}
+
+.empty-row td {
+  border-bottom: none;
+}
+
+.empty-row:hover {
+  background: transparent !important;
 }
 
 .font-mono {
