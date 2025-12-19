@@ -24,6 +24,7 @@
     
     <!-- 订单关联车辆的结果映射：在 Order 对象中包含关联的 Bus 对象信息 -->
     <resultMap id="OrderWithBusResultMap" type="com.lm.school_bus.entity.Order" extends="BaseResultMap">
+        <result column="student_name" property="studentName"/>
         <association property="bus" javaType="com.lm.school_bus.entity.Bus">
             <id column="b_bus_id" property="busId"/>
             <result column="plate_number" property="plateNumber"/>
@@ -160,9 +161,11 @@
     <select id="selectByInvitationCodeAll" resultMap="OrderWithBusResultMap">
         SELECT 
             o.*,
-            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.number, b.price
+            b.bus_id as b_bus_id, b.plate_number, b.car_type, b.driver_name, b.number, b.price,
+            s.name as student_name
         FROM t_order o
         LEFT JOIN t_bus b ON o.bus_id = b.bus_id
+        LEFT JOIN student_info s ON o.student_id = s.student_id
         WHERE o.invitation_code = #{invitationCode}
     </select>
 

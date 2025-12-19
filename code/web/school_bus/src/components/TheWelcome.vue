@@ -1,10 +1,14 @@
 <script setup>
 import WelcomeItem from './WelcomeItem.vue'
-import DocumentationIcon from './icons/IconDocumentation.vue'
-import ToolingIcon from './icons/IconTooling.vue'
-import EcosystemIcon from './icons/IconEcosystem.vue'
-import CommunityIcon from './icons/IconCommunity.vue'
-import SupportIcon from './icons/IconSupport.vue'
+import NetworkIcon from './NetworkIcon.vue'
+
+const icons = {
+  documentation: 'https://api.iconify.design/flat-color-icons:document.svg',
+  tooling: 'https://api.iconify.design/flat-color-icons:settings.svg',
+  ecosystem: 'https://api.iconify.design/flat-color-icons:organization.svg',
+  community: 'https://api.iconify.design/flat-color-icons:comments.svg',
+  support: 'https://api.iconify.design/flat-color-icons:like.svg'
+}
 
 const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 </script>
@@ -12,7 +16,7 @@ const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 <template>
   <WelcomeItem>
     <template #icon>
-      <DocumentationIcon />
+      <NetworkIcon :src="icons.documentation" />
     </template>
     <template #heading>Documentation</template>
 
@@ -23,7 +27,7 @@ const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 
   <WelcomeItem>
     <template #icon>
-      <ToolingIcon />
+      <NetworkIcon :src="icons.tooling" />
     </template>
     <template #heading>Tooling</template>
 
@@ -50,7 +54,7 @@ const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 
   <WelcomeItem>
     <template #icon>
-      <EcosystemIcon />
+      <NetworkIcon :src="icons.ecosystem" />
     </template>
     <template #heading>Ecosystem</template>
 
@@ -66,7 +70,7 @@ const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 
   <WelcomeItem>
     <template #icon>
-      <CommunityIcon />
+      <NetworkIcon :src="icons.community" />
     </template>
     <template #heading>Community</template>
 
@@ -84,7 +88,7 @@ const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
 
   <WelcomeItem>
     <template #icon>
-      <SupportIcon />
+      <NetworkIcon :src="icons.support" />
     </template>
     <template #heading>Support Vue</template>
 

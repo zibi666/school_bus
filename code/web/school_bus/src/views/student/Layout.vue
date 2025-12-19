@@ -12,6 +12,9 @@
         <router-link to="/student/trips" class="nav-item" active-class="active">
           我的订单
         </router-link>
+        <router-link to="/student/my-bus-passengers" class="nav-item" active-class="active">
+          我的发车
+        </router-link>
         <router-link to="/student/profile" class="nav-item" active-class="active">
           个人信息
         </router-link>

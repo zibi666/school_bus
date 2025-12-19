@@ -151,6 +151,13 @@ export const calculateOrderPrice = (data) => api.post('/student/order/calculate-
 export const payOrder = (orderId) => api.post(`/student/order/pay/${orderId}`)
 
 /**
+ * 获取同一邀请码下的所有乘客（订单）
+ * @param {String} invitationCode - 邀请码
+ * @returns {Promise} ApiResponse<Array<Order>>
+ */
+export const getTripPassengers = (invitationCode) => api.get(`/student/order/passengers/${invitationCode}`)
+
+/**
  * 通过邀请码查询订单（查看原申请人的订单信息）
  * 学生输入邀请码后，获取该邀请码对应的原始订单信息
  * @param {String} invitationCode - 邀请码（8位，如 ABC12345）

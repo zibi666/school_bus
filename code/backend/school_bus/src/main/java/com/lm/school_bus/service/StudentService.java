@@ -224,6 +224,18 @@ public class StudentService {
     }
     
     /**
+     * 获取同一邀请码下的所有乘客订单
+     * @param invitationCode 邀请码
+     * @return 订单列表（包含申请人和所有加入者）
+     */
+    public List<Order> getPassengersByInvitationCode(String invitationCode) {
+        if (invitationCode == null || invitationCode.isEmpty()) {
+            throw new BusinessException(400, "邀请码不能为空");
+        }
+        return orderMapper.selectByInvitationCodeAll(invitationCode);
+    }
+
+    /**
      * 通过邀请码查询订单
      * 用于学生查看申请人的订单详情和车辆信息，决定是否加入
      * 如果同一邀请码有多条记录（申请人+加入者），优先返回申请人的订单

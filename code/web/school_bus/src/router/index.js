@@ -94,6 +94,17 @@ const router = createRouter({
           path: 'profile',
           name: 'student-profile',
           component: () => import('../views/student/Profile.vue')
+        },
+
+        /**
+         * 我的发车页面
+         * 查看我申请的车辆及乘客信息
+         * 路由：/student/my-bus-passengers
+         */
+        {
+          path: 'my-bus-passengers',
+          name: 'student-my-bus-passengers',
+          component: () => import('../views/student/MyBusPassengers.vue')
         }
       ]
     },

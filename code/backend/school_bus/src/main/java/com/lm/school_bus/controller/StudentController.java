@@ -179,6 +179,17 @@ public class StudentController {
     }
     
     /**
+     * 获取同一邀请码下的所有乘客
+     * @param invitationCode 邀请码
+     * @return 订单列表（代表所有乘客）
+     */
+    @GetMapping("/order/passengers/{invitationCode}")
+    public ApiResponse<List<Order>> getPassengersByInvitationCode(@PathVariable String invitationCode) {
+        List<Order> passengers = studentService.getPassengersByInvitationCode(invitationCode);
+        return ApiResponse.success("获取成功", passengers);
+    }
+
+    /**
      * 通过邀请码查询订单
      * 用于学生通过邀请码加入订单前，查看订单详情和车辆信息
      * @param invitationCode 邀请码

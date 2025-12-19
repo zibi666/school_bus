@@ -64,4 +64,7 @@ public class Order {
     
     /** 关联的车辆对象（非数据库字段，用于前端显示车辆详情） */
     private Bus bus;
+    
+    /** 学生姓名（非数据库字段，用于前端显示乘客姓名） */
+    private String studentName;
 }
