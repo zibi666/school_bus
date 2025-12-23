@@ -5,7 +5,11 @@
         <h2 class="page-title">我的订单</h2>
         <p class="subhead">查看您的包车申请记录与审核状态。</p>
       </div>
-      <div style="display:flex; gap:12px; align-items:center">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap: wrap;">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchKeyword" class="search-input" placeholder="搜索目的地..." />
+        </div>
         <input v-model="invitationCodeInput" class="invite-input" placeholder="输入邀请码加入" />
         <button class="btn-apply" @click="handleJoinByCode">加入</button>
         <button class="btn-primary btn-new" @click="$router.push('/student/charter')">
@@ -19,7 +23,7 @@
       <SkeletonCard v-for="i in 2" :key="i" />
     </div>
 
-    <div v-else-if="orders.length === 0" class="empty-state">
+    <div v-else-if="filteredOrders.length === 0 && !searchKeyword" class="empty-state">
       <div class="empty-icon">📂</div>
       <p>暂无申请记录</p>
       <button class="btn-apply" @click="$router.push('/student/charter')">
@@ -27,9 +31,17 @@
       </button>
     </div>
 
+    <div v-else-if="filteredOrders.length === 0 && searchKeyword" class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <p>未找到目的地包含 "{{ searchKeyword }}" 的订单</p>
+      <button class="btn-apply" @click="searchKeyword = ''">
+        清除搜索
+      </button>
+    </div>
+
     <div v-else class="orders-grid">
       <div 
-        v-for="order in orders" 
+        v-for="order in filteredOrders" 
         :key="order.id" 
         class="order-card"
         :class="statusClass(order.status)"
@@ -172,7 +184,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 // 请确保这里的 api 引用路径是正确的
 import { getMyOrders, cancelOrder, deleteOrder, getBus, refundOrder, payOrder, joinOrderByInvitationCode, leaveOrder } from '../../api'
@@ -190,6 +202,18 @@ const currentPaymentOrder = ref(null)
 const invitationCodeInput = ref('')
 const joining = ref(false)
 const leaving = ref(false)
+const searchKeyword = ref('')
+
+// 根据目的地过滤订单
+const filteredOrders = computed(() => {
+  if (!searchKeyword.value.trim()) {
+    return orders.value
+  }
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  return orders.value.filter(order => 
+    order.destination && order.destination.toLowerCase().includes(keyword)
+  )
+})
 
 const fetchOrders = async () => {
   // 仅当没有数据时才显示加载状态
@@ -585,6 +609,42 @@ const formatDuration = (startTime, endTime) => {
   align-items: center;
   gap: 10px;
   box-shadow: 0 4px 16px rgba(34, 211, 238, 0.3);
+}
+
+/* --- 搜索框样式 --- */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.search-input {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+  padding: 8px 12px 8px 36px;
+  border-radius: 8px;
+  width: 180px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: rgba(34, 211, 238, 0.4);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
 }
 
 .invite-input {
