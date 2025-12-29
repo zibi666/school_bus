@@ -28,6 +28,7 @@ import java.util.Map;
 @CrossOrigin
 public class StudentController {
 
+    // 依赖注入学生服务层
     @Autowired
     private StudentService studentService;
 
@@ -150,11 +151,13 @@ public class StudentController {
         if (startTimeStr == null || endTimeStr == null) {
             return ApiResponse.error(400, "开始和结束时间不能为空");
         }
-        
+        // 将字符串时间转换为 LocalDateTime 对象
         java.time.LocalDateTime startTime = java.time.LocalDateTime.parse(startTimeStr);
         java.time.LocalDateTime endTime = java.time.LocalDateTime.parse(endTimeStr);
         
+        // 计算价格
         java.math.BigDecimal price = studentService.calculateOrderPrice(startTime, endTime, requestedCarType);
+        // 计算用车时长（小时）
         double hours = com.lm.school_bus.util.PriceCalculator.calculateHours(startTime, endTime);
         
         Map<String, Object> result = new java.util.HashMap<>();
@@ -215,6 +218,7 @@ public class StudentController {
         }
         // 额外检查：申请人不能加入自己的邀请码，提前返回友好错误信息
         try {
+            // 获取邀请码对应的订单，检查申请人身份
             Order existing = studentService.getOrderByInvitationCode(invitationCode);
             if (existing != null && studentId.equals(existing.getStudentId())) {
                 return ApiResponse.error(400, "申请人不能加入自己的车辆");

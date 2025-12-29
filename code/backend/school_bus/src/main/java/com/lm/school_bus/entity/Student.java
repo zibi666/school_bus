@@ -7,6 +7,7 @@ import lombok.Data;
  * 对应数据库表 student_info
  */
 @Data
+// 是一个来自第三方库 Lombok 的注解，自动生成 getter、setter、toString 等方法
 public class Student {
     /** 学号（主键，唯一标识） */
     private String studentId;

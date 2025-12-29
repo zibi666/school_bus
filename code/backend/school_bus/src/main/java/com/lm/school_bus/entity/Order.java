@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
  * 申请人退票时，同邀请码下的所有订单都会变为已退票
  */
 @Data
+// 是一个来自第三方库 Lombok 的注解，自动生成 getter、setter、toString 等方法
 public class Order {
     /** 订单 ID（主键，自增） */
     private Integer orderId;

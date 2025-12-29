@@ -27,6 +27,7 @@ import java.util.List;
 @Service
 public class StudentService {
 
+    // 依赖注入各个 Mapper 用于数据库操作
     @Autowired
     private OrderMapper orderMapper;
 
@@ -68,6 +69,7 @@ public class StudentService {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder code = new StringBuilder();
         java.util.Random random = new java.util.Random();
+        //循环生成8个随机字符
         for (int i = 0; i < 8; i++) {
             code.append(chars.charAt(random.nextInt(chars.length())));
         }
